@@ -1,0 +1,14 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tabletables",
+  "info": {
+    "singularName": "tabletable",
+    "pluralName": "tabletables",
+    "displayName": "tabletable"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {}
+}
