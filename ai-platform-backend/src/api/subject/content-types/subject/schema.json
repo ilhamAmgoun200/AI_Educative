@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "subjects",
+  "info": {
+    "singularName": "subject",
+    "pluralName": "subjects",
+    "displayName": "Subject",
+    "description": "Educational subjects with lessons"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "subject_name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 50
+    },
+    "description": {
+      "type": "text"
+    },
+    "level": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "author": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::user.user",
+      "inversedBy": "subjects"
+    },
+    "lessons": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::lesson.lesson",
+      "mappedBy": "subject"
+    }
+  }
+}
