@@ -319,7 +319,7 @@ const CourseDetail = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">Étudiants:</span>
-                  <span className="font-medium text-slate-900">{courseData.studants}</span>
+                  <span className="font-medium text-slate-900">{courseData.students}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">Langue:</span>
