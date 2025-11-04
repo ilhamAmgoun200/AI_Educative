@@ -33,11 +33,11 @@ export const getUser = () => {
 
 // suppresion de toute les donnees d'auth
 export const clearAuthData = () => {
-    localStorage.removeToken();
+    removeToken();
     localStorage.removeItem(USER_KEY);
 };
 
 // verifier si user connected 
  export const isAuthenticated = () => {
-    return Boolean(getToken);
+    return Boolean(getToken());
  }

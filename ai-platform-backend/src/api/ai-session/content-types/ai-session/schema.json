@@ -41,7 +41,7 @@
     "user": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::user.user",
+      "target": "plugin::users-permissions.user",
       "inversedBy": "ai_sessions"
     },
     "interactions": {

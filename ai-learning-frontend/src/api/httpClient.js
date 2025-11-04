@@ -29,7 +29,7 @@ httpClient.interceptors.response.use(
     (error)=> {
         if(error.response?.status === 401){
             console.warn("Token expired or invalide");
-            localStorage.clearAuthData();
+            clearAuthData();
             window.location.href = "/login";
         }
         return Promise.reject(error);
