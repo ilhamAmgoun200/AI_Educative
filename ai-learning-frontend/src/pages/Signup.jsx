@@ -95,10 +95,24 @@ export default function Signup() {
       }, 2000);
     } catch (err) {
       console.error("Erreur lors de l'inscription :", err.response?.data || err.message);
-      const errorMessage =
-        err.response?.data?.error?.message ||
-        err.message ||
-        "Une erreur est survenue lors de l'inscription";
+      
+      // Gestion d'erreur détaillée
+      let errorMessage = "Une erreur est survenue lors de l'inscription";
+      
+      if (err.response?.data?.error) {
+        // Erreur de validation Strapi
+        if (err.response.data.error.message) {
+          errorMessage = err.response.data.error.message;
+        } else if (err.response.data.error.details?.errors) {
+          // Erreurs de validation détaillées
+          const errors = err.response.data.error.details.errors;
+          const firstError = Object.values(errors)[0];
+          errorMessage = firstError?.[0]?.message || errorMessage;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       setIsLoading(false);
     }

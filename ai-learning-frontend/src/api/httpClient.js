@@ -4,26 +4,24 @@ import { getToken , clearAuthData } from "../utils/localStorage";
 
 const httpClient = axios.create({
         baseURL : CONFIG.API_URL,
-        Headers : {"Content-Type" : "application/json"},
-
+        headers : {"Content-Type" : "application/json"},
 })
  
 
-// intercepteur execute avant chque requete  
+// intercepteur execute avant chaque requête  
 httpClient.interceptors.request.use(
-    (confing) => {
+    (config) => {
         const token = getToken();
         if (token){
             //backend va savoir quel utilisateur fait la requête
-            confing.headers.Authorization =`Bearer ${token}`;
+            config.headers.Authorization = `Bearer ${token}`;
         }
-        return confing;
-
+        return config;
     },
     (error) => Promise.reject(error)
 );
 
-//interceptor des reponsesnapres chque reponse et pour gerer les erreurs globales 
+//interceptor des réponses après chaque réponse et pour gérer les erreurs globales 
 httpClient.interceptors.response.use(
     (response) => response,
     (error)=> {
@@ -34,7 +32,6 @@ httpClient.interceptors.response.use(
         }
         return Promise.reject(error);
     }
-
 );
 
 export default httpClient;

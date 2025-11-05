@@ -6,6 +6,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import HomePage from './pages/HomePage';
 import CourseDetail from './pages/CourseDetail';
+import Subjects from './pages/subjects';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/subjects" element={<Subjects />} />
             <Route path="/course/:courseId" element={<CourseDetail />} />
           </Routes>
         </div>

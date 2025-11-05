@@ -62,7 +62,7 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::subject.subject",
-      "mappedBy": "user"
+      "mappedBy": "author"
     },
     "ai_sessions": {
       "type": "relation",

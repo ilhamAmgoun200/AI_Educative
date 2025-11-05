@@ -22,7 +22,7 @@ export default function Login() {
   useEffect(() => {
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
-      // Effacer le message après 5 secondes
+
       const timer = setTimeout(() => {
         setSuccessMessage("");
       }, 5000);
@@ -82,9 +82,20 @@ export default function Login() {
       loginUser(data);
     } catch (err) {
       console.error("Erreur lors de la connexion :", err.response?.data || err.message);
-      const errorMessage =
-        err.response?.data?.error?.message ||
-        "Identifiants incorrects ou serveur indisponible";
+      
+      // Gestion d'erreur détaillée
+      let errorMessage = "Identifiants incorrects ou serveur indisponible";
+      
+      if (err.response?.status === 403) {
+        errorMessage = err.message || "Accès refusé. Vérifiez les permissions dans Strapi pour la route /auth/local";
+      } else if (err.response?.status === 400) {
+        errorMessage = err.response?.data?.error?.message || "Email ou mot de passe incorrect";
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error.message || errorMessage;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
     } finally {
       setIsLoading(false);

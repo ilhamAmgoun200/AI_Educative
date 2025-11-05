@@ -31,6 +31,10 @@ export const getUser = () => {
 };
 
 
+export const setAuthData = (token , user ) =>{
+    saveUser(user);
+    saveToken(token)
+}
 // suppresion de toute les donnees d'auth
 export const clearAuthData = () => {
     removeToken();
