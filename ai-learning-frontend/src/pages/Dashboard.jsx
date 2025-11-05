@@ -3,20 +3,187 @@ import { AuthContext } from '../contexts/authContext';
 import httpClient from '../api/httpClient';
 import { Link } from 'react-router-dom';
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const NAV_TABS = ['accueil', 'cours', 'progression', 'profil'];
+
+const QUICK_ACTIONS = [
+  { title: 'Explorer les cours', icon: '📖', action: 'explorer' },
+  { title: 'Voir mes matières', icon: '📚', action: 'subjects' },
+  { title: 'Nouveau cours', icon: '➕', action: 'new' }
+];
+
+const BADGES = ['🥇', '🥈', '⭐', '🚀'];
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Vérifie si l'utilisateur est un professeur
+ */
+const isUserTeacher = (user) => {
+  return user?.role?.name === 'teacher';
+};
+
+/**
+ * Extrait les informations d'un subject selon le rôle
+ */
+const getSubjectInfo = (subject, isTeacher) => {
+  return isTeacher ? subject : subject.attributes;
+};
+
+/**
+ * Extrait les leçons d'un subject selon le rôle
+ */
+const getSubjectLessons = (subject, isTeacher) => {
+  const info = getSubjectInfo(subject, isTeacher);
+  return isTeacher ? (info.lessons || []) : (info.lessons?.data || []);
+};
+
+/**
+ * Extrait le nom de l'auteur d'un subject
+ */
+const getAuthorName = (subject, isTeacher, currentUser) => {
+  if (isTeacher) {
+    return currentUser.username;
+  }
+  const info = getSubjectInfo(subject, isTeacher);
+  return info.author?.data?.attributes?.username || info.author?.username || 'Inconnu';
+};
+
+/**
+ * Extrait le total depuis la réponse paginée de Strapi
+ */
+const extractTotalFromPagination = (response) => {
+  return response?.data?.meta?.pagination?.total || 0;
+};
+
+/**
+ * Compte les PDFs dans une liste de leçons
+ */
+const countPdfs = (lessons) => {
+  return lessons.reduce((count, lesson) => {
+    const lessonInfo = lesson.attributes || lesson;
+    return lessonInfo.pdf_url ? count + 1 : count;
+  }, 0);
+};
+
+// ============================================================================
+// API FUNCTIONS
+// ============================================================================
+
+/**
+ * Récupère les subjects selon le rôle de l'utilisateur
+ */
+const fetchSubjects = async (user) => {
+  const isTeacher = isUserTeacher(user);
+  const endpoint = isTeacher
+    ? '/users/me?populate[subjects][populate][lessons]=*'
+    : '/subjects';
+
+  const { data } = await httpClient.get(endpoint);
+
+  if (isTeacher) {
+    return data.subjects || [];
+  } else if (user?.role?.name === 'student') {
+    return data.data || [];
+  }
+  return [];
+};
+
+/**
+ * Compte les professeurs avec rôle teacher
+ */
+const fetchTeachersCount = async () => {
+  try {
+    // Tentative principale : utiliser le filtre avec pagination
+    const response = await httpClient.get(
+      '/users?filters[role][name][$eq]=teacher&pagination[pageSize]=1&pagination[withCount]=true'
+    );
+
+    const total = extractTotalFromPagination(response);
+    if (total > 0) {
+      return total;
+    }
+
+    // Fallback : récupérer tous les users et filtrer manuellement
+    const allUsersResponse = await httpClient.get('/users?populate=role&pagination[pageSize]=100');
+    const users = allUsersResponse.data?.data || allUsersResponse.data || [];
+    
+    return users.filter(user => {
+      const userRole = user.role?.name || 
+                      user.attributes?.role?.name || 
+                      user.role?.attributes?.name || 
+                      user.attributes?.role?.attributes?.name;
+      return userRole === 'teacher';
+    }).length;
+  } catch (error) {
+    console.error('Erreur lors du comptage des teachers:', error);
+    return 0;
+  }
+};
+
+/**
+ * Récupère toutes les statistiques depuis la base de données
+ */
+const fetchStatistics = async (subjectsData, isTeacher) => {
+  try {
+    const [teachersCount, subjectsCount, lessonsCount] = await Promise.all([
+      fetchTeachersCount(),
+      httpClient.get('/subjects?pagination[pageSize]=1&pagination[page]=1'),
+      httpClient.get('/lessons?pagination[pageSize]=1&pagination[page]=1')
+    ]);
+
+    return {
+      teachers: teachersCount,
+      subjects: extractTotalFromPagination(subjectsCount) || subjectsData.length,
+      lessons: extractTotalFromPagination(lessonsCount),
+    };
+  } catch (error) {
+    console.error('Erreur lors du comptage des statistiques:', error);
+    
+    // Fallback : calculer depuis les données locales
+    const lessonsCount = subjectsData.reduce((count, subject) => {
+      return count + getSubjectLessons(subject, isTeacher).length;
+    }, 0);
+
+    return {
+      teachers: isTeacher ? 1 : new Set(subjectsData.map(s => {
+        const info = getSubjectInfo(s, isTeacher);
+        return info.author?.data?.id || info.author?.id;
+      })).size,
+      subjects: subjectsData.length,
+      lessons: lessonsCount,
+    };
+  }
+};
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('accueil');
   const [subjects, setSubjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [totalTeachers, setTotalTeachers] = useState(0);
-  const [totalLessons, setTotalLessons] = useState(0);
-  const [totalPdfs, setTotalPdfs] = useState(0);
-  const [totalSubjectsCount, setTotalSubjectsCount] = useState(0);
+  const [statistics, setStatistics] = useState({
+    teachers: 0,
+    lessons: 0,
+    pdfs: 0,
+    subjects: 0,
+  });
 
-  // Récupérer les subjects depuis la base de données
+  const isTeacher = isUserTeacher(user);
+  const totalSubjects = statistics.subjects > 0 ? statistics.subjects : subjects.length;
+
+  // Récupérer les données
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
       if (!user) {
         setIsLoading(false);
         return;
@@ -26,155 +193,154 @@ const Dashboard = () => {
         setIsLoading(true);
         setError('');
 
-        // Déterminer l'endpoint selon le rôle (vérifier les deux noms possibles)
-        const isTeacher = user?.role?.name === 'teacher' ;
-        const endpoint = isTeacher
-          ? '/users/me?populate[subjects][populate][lessons]=*'
-          : '/subjects'; // Le populate est géré par le contrôleur backend
+        // Récupérer les subjects
+        const subjectsData = await fetchSubjects(user);
+        setSubjects(subjectsData);
 
-        const { data } = await httpClient.get(endpoint);
+        // Calculer les PDFs depuis les subjects chargés
+        const pdfsCount = subjectsData.reduce((count, subject) => {
+          const lessons = getSubjectLessons(subject, isTeacher);
+          return count + countPdfs(lessons);
+        }, 0);
 
-        // Adapter les données selon le rôle
-        let subjectsData = [];
-        if (isTeacher) {
-          subjectsData = data.subjects || [];
-          setSubjects(subjectsData);
-        } else if (user?.role?.name === 'student') {
-          subjectsData = data.data || [];
-          setSubjects(subjectsData);
-        } else {
-          setSubjects([]);
-        }
-
-        // Calculer les statistiques depuis les données chargées
-        const getSubjectInfo = (subject) => {
-          return isTeacher ? subject : subject.attributes;
-        };
-
-        const getSubjectLessons = (subject) => {
-          const info = getSubjectInfo(subject);
-          return isTeacher ? (info.lessons || []) : (info.lessons?.data || []);
-        };
-
-        // Calculer le nombre total de leçons
-        let lessonsCount = 0;
-        let pdfsCount = 0;
-        
-        subjectsData.forEach((subject) => {
-          const lessons = getSubjectLessons(subject);
-          lessonsCount += lessons.length;
-          
-          // Compter les PDFs
-          lessons.forEach((lesson) => {
-            const lessonInfo = lesson.attributes || lesson;
-            if (lessonInfo.pdf_url) {
-              pdfsCount++;
-            }
-          });
+        // Récupérer les statistiques
+        const stats = await fetchStatistics(subjectsData, isTeacher);
+        setStatistics({
+          ...stats,
+          pdfs: pdfsCount,
         });
-
-        setTotalPdfs(pdfsCount);
-
-        // Récupérer les comptes depuis la base de données (optimisé - seulement les totaux)
-        try {
-          // 1. Compter les utilisateurs avec le rôle teacher (sans condition supplémentaire)
-          const teacherCountResponse = await httpClient.get(
-            '/users?filters[role][name]=teacher'
-          );
-          const teachersCount = teacherCountResponse.data?.meta?.pagination?.total || 0;
-          setTotalTeachers(teachersCount);
-
-          // 2. Compter tous les subjects (sans aucune condition)
-          const subjectsCountResponse = await httpClient.get(
-            '/subjects?pagination[pageSize]=1&pagination[page]=1'
-          );
-          const totalSubjectsCount = subjectsCountResponse.data?.meta?.pagination?.total || subjectsData.length;
-          setTotalSubjectsCount(totalSubjectsCount);
-
-          // 3. Compter tous les cours (lessons) sans condition
-          const lessonsCountResponse = await httpClient.get(
-            '/lessons?pagination[pageSize]=1&pagination[page]=1'
-          );
-          const totalLessonsCount = lessonsCountResponse.data?.meta?.pagination?.total || 0;
-          setTotalLessons(totalLessonsCount);
-
-          console.log('Statistiques complètes depuis la BD:', {
-            teachers: teachersCount,
-            subjects: totalSubjectsCount,
-            lessons: totalLessonsCount,
-            pdfs: pdfsCount
-          });
-        } catch (countErr) {
-          console.error('Erreur lors du comptage des statistiques:', countErr);
-          // En cas d'erreur, utiliser les valeurs calculées depuis les données chargées
-          setTotalLessons(lessonsCount);
-          if (!isTeacher) {
-            // Fallback pour les professeurs depuis les subjects
-            const uniqueTeachers = new Set();
-            if (subjectsData && subjectsData.length > 0) {
-              subjectsData.forEach(s => {
-                const info = isTeacher ? s : (s.attributes || s);
-                const authorId = info.author?.data?.id || info.author?.id;
-                if (authorId) uniqueTeachers.add(authorId);
-              });
-            }
-            setTotalTeachers(uniqueTeachers.size);
-          } else {
-            setTotalTeachers(1);
-          }
-        }
       } catch (err) {
-        console.error('Erreur de récupération des subjects :', err);
+        console.error('Erreur de récupération des données :', err);
         setError('Impossible de charger les matières. Veuillez réessayer.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    loadData();
   }, [user]);
 
-  // Calculer les statistiques depuis les vraies données
-  const isTeacher = user?.role?.name === 'teacher' ;
-  // Utiliser le compte depuis la BD si disponible, sinon utiliser subjects.length
-  const totalSubjects = totalSubjectsCount > 0 ? totalSubjectsCount : subjects.length;
-
+  // Calculer le progrès utilisateur
   const userProgress = {
-    completed: 0, // À calculer depuis les progresses si disponible
-    total: totalLessons,
-    percentage: totalLessons > 0 ? Math.round((0 / totalLessons) * 100) : 0
+    completed: 0,
+    total: statistics.lessons,
+    percentage: statistics.lessons > 0 ? Math.round((0 / statistics.lessons) * 100) : 0
   };
 
-  // Générer les catégories depuis les subjects
-  const categories = [
-    { name: 'Toutes les matières', icon: '📚', count: totalSubjects }
-  ];
+  // ============================================================================
+  // RENDER HELPERS
+  // ============================================================================
 
-  const quickActions = [
-    { title: 'Explorer les cours', icon: '📖', action: 'explorer' },
-    { title: 'Voir mes matières', icon: '📚', action: 'subjects' },
-    { title: 'Nouveau cours', icon: '➕', action: 'new' }
-  ];
+  const renderLoadingState = () => (
+    <div className="flex justify-center items-center py-10">
+      <div className="w-6 h-6 border-t-2 border-blue-600 rounded-full animate-spin mr-2"></div>
+      <p className="text-slate-600">Chargement des matières...</p>
+    </div>
+  );
 
-  // Fonction pour obtenir les informations d'un subject
-  const getSubjectInfo = (subject) => {
-    return isTeacher ? subject : subject.attributes;
+  const renderErrorState = () => (
+    <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-center">
+      <p className="text-red-600 text-sm">{error}</p>
+    </div>
+  );
+
+  const renderEmptyState = () => (
+    <div className="col-span-full text-center py-8">
+      <p className="text-slate-600 mb-4">Aucune matière disponible pour le moment.</p>
+      {isTeacher && (
+        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+          Créer une matière
+        </button>
+      )}
+    </div>
+  );
+
+  const renderLessonItem = (lesson) => {
+    const lessonTitle = lesson.attributes?.title || lesson.title;
+    const lessonPdf = lesson.attributes?.pdf_url || lesson.pdf_url;
+
+    return (
+      <div
+        key={lesson.id}
+        className="flex items-center justify-between text-xs text-slate-600 bg-gray-50 p-2 rounded"
+      >
+        <span className="flex items-center space-x-1">
+          <span>📘</span>
+          <span className="truncate">{lessonTitle}</span>
+        </span>
+        {lessonPdf && (
+          <a
+            href={lessonPdf}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-700 ml-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            📄
+          </a>
+        )}
+      </div>
+    );
   };
 
-  // Fonction pour obtenir les leçons d'un subject
-  const getSubjectLessons = (subject) => {
-    const info = getSubjectInfo(subject);
-    return isTeacher ? (info.lessons || []) : (info.lessons?.data || []);
+  const renderSubjectCard = (subject) => {
+    const info = getSubjectInfo(subject, isTeacher);
+    const lessons = getSubjectLessons(subject, isTeacher);
+    const authorName = getAuthorName(subject, isTeacher, user);
+
+    return (
+      <div
+        key={subject.id}
+        className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow"
+      >
+        <div className="flex justify-between items-start mb-3">
+          <span className="text-2xl">📚</span>
+          {info.level && (
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+              {info.level}
+            </span>
+          )}
+        </div>
+
+        <h4 className="font-semibold text-slate-900 mb-2">{info.subject_name}</h4>
+
+        {info.description && (
+          <p className="text-xs text-slate-600 mb-2 line-clamp-2">
+            {info.description}
+          </p>
+        )}
+
+        <p className="text-xs text-slate-500 mb-3">
+          👨‍🏫 {authorName} • {lessons?.length || 0} leçon{lessons?.length > 1 ? 's' : ''}
+        </p>
+
+        {lessons && lessons.length > 0 && (
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-slate-700 mb-2">Leçons :</p>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {lessons.slice(0, 3).map(renderLessonItem)}
+              {lessons.length > 3 && (
+                <p className="text-xs text-slate-500 text-center">
+                  +{lessons.length - 3} autre{lessons.length - 3 > 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <Link
+          to={`/subjects/${subject.id}`}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors block text-center"
+        >
+          {isTeacher ? 'Gérer' : 'Voir les détails'}
+        </Link>
+      </div>
+    );
   };
 
-  // Fonction pour obtenir le nom de l'auteur
-  const getAuthorName = (subject) => {
-    const info = getSubjectInfo(subject);
-    if (isTeacher) {
-      return user.username;
-    }
-    return info.author?.data?.attributes?.username || info.author?.username || 'Inconnu';
-  };
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -182,7 +348,6 @@ const Dashboard = () => {
       <header className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
             <div className="flex items-center">
               <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mr-3">
                 <span className="text-white font-bold text-sm">AI</span>
@@ -190,9 +355,8 @@ const Dashboard = () => {
               <h1 className="text-xl font-bold text-white">LearnAI</h1>
             </div>
 
-            {/* Navigation */}
             <nav className="hidden md:flex space-x-8">
-              {['accueil', 'cours', 'progression', 'profil'].map((tab) => (
+              {NAV_TABS.map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -207,7 +371,6 @@ const Dashboard = () => {
               ))}
             </nav>
 
-            {/* User Menu */}
             <div className="flex items-center space-x-4">
               <button className="text-gray-300 hover:text-white">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,9 +392,7 @@ const Dashboard = () => {
             Bonjour, {user?.username || 'Utilisateur'}! 👋
           </h2>
           <p className="text-gray-300">
-            {isTeacher 
-              ? 'Gérez vos matières et leçons' 
-              : 'Continuez votre apprentissage avec l\'IA'}
+            {isTeacher ? 'Gérez vos matières et leçons' : 'Continuez votre apprentissage avec l\'IA'}
           </p>
         </div>
 
@@ -249,7 +410,7 @@ const Dashboard = () => {
                 <span>{userProgress.percentage}%</span>
               </div>
               <div className="w-full bg-gray-300 rounded-full h-2">
-                <div 
+                <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${userProgress.percentage}%` }}
                 ></div>
@@ -264,7 +425,7 @@ const Dashboard = () => {
           <div className="bg-gray-100 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Actions Rapides</h3>
             <div className="space-y-3">
-              {quickActions.map((action, index) => (
+              {QUICK_ACTIONS.map((action, index) => (
                 <button
                   key={index}
                   className="w-full flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors"
@@ -288,7 +449,7 @@ const Dashboard = () => {
               <span className="text-2xl">🏆</span>
             </div>
             <div className="flex space-x-3">
-              {['🥇', '🥈', '⭐', '🚀'].map((badge, index) => (
+              {BADGES.map((badge, index) => (
                 <div
                   key={index}
                   className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-xl"
@@ -297,9 +458,7 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
-            <p className="text-sm text-slate-600 mt-3">
-              4 badges débloqués
-            </p>
+            <p className="text-sm text-slate-600 mt-3">4 badges débloqués</p>
           </div>
         </div>
 
@@ -309,124 +468,17 @@ const Dashboard = () => {
             <h3 className="text-xl font-bold text-slate-900">
               {isTeacher ? 'Mes Matières' : 'Matières Disponibles'}
             </h3>
-            <Link 
-              to="/subjects" 
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
+            <Link to="/subjects" className="text-blue-600 hover:text-blue-700 font-medium">
               Voir tout →
             </Link>
           </div>
 
-          {/* Chargement */}
-          {isLoading && (
-            <div className="flex justify-center items-center py-10">
-              <div className="w-6 h-6 border-t-2 border-blue-600 rounded-full animate-spin mr-2"></div>
-              <p className="text-slate-600">Chargement des matières...</p>
-            </div>
-          )}
+          {isLoading && renderLoadingState()}
+          {error && renderErrorState()}
 
-          {/* Erreur */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-center">
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
-
-          {/* Liste des matières */}
           {!isLoading && !error && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {subjects.length === 0 ? (
-                <div className="col-span-full text-center py-8">
-                  <p className="text-slate-600 mb-4">Aucune matière disponible pour le moment.</p>
-                  {isTeacher && (
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                      Créer une matière
-                    </button>
-                  )}
-                </div>
-              ) : (
-                subjects.map((subject) => {
-                  const info = getSubjectInfo(subject);
-                  const lessons = getSubjectLessons(subject);
-                  const authorName = getAuthorName(subject);
-
-                  return (
-                    <div 
-                      key={subject.id} 
-                      className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <span className="text-2xl">📚</span>
-                        {info.level && (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {info.level}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <h4 className="font-semibold text-slate-900 mb-2">{info.subject_name}</h4>
-                      
-                      {info.description && (
-                        <p className="text-xs text-slate-600 mb-2 line-clamp-2">
-                          {info.description}
-                        </p>
-                      )}
-
-                      <p className="text-xs text-slate-500 mb-3">
-                        👨‍🏫 {authorName} • {lessons?.length || 0} leçon{lessons?.length > 1 ? 's' : ''}
-                      </p>
-
-                      {/* Liste des leçons avec PDF */}
-                      {lessons && lessons.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-xs font-semibold text-slate-700 mb-2">Leçons :</p>
-                          <div className="space-y-1 max-h-32 overflow-y-auto">
-                            {lessons.slice(0, 3).map((lesson) => {
-                              const lessonTitle = lesson.attributes?.title || lesson.title;
-                              const lessonPdf = lesson.attributes?.pdf_url || lesson.pdf_url;
-                              
-                              return (
-                                <div 
-                                  key={lesson.id}
-                                  className="flex items-center justify-between text-xs text-slate-600 bg-gray-50 p-2 rounded"
-                                >
-                                  <span className="flex items-center space-x-1">
-                                    <span>📘</span>
-                                    <span className="truncate">{lessonTitle}</span>
-                                  </span>
-                                  {lessonPdf && (
-                                    <a
-                                      href={lessonPdf}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:text-blue-700 ml-2"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      📄
-                                    </a>
-                                  )}
-                                </div>
-                              );
-                            })}
-                            {lessons.length > 3 && (
-                              <p className="text-xs text-slate-500 text-center">
-                                +{lessons.length - 3} autre{lessons.length - 3 > 1 ? 's' : ''}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <Link
-                        to={`/subjects/${subject.id}`}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors block text-center"
-                      >
-                        {isTeacher ? 'Gérer' : 'Voir les détails'}
-                      </Link>
-                    </div>
-                  );
-                })
-              )}
+              {subjects.length === 0 ? renderEmptyState() : subjects.map(renderSubjectCard)}
             </div>
           )}
         </div>
@@ -434,7 +486,6 @@ const Dashboard = () => {
         {/* Section Statistiques */}
         <div className="bg-gray-100 rounded-xl p-6">
           <h3 className="text-xl font-bold text-slate-900 mb-6">Statistiques</h3>
-          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
               <div className="text-3xl mb-2">📚</div>
@@ -444,17 +495,19 @@ const Dashboard = () => {
             <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
               <div className="text-3xl mb-2">📘</div>
               <h4 className="font-semibold text-slate-900 mb-1">Leçons</h4>
-              <p className="text-sm text-slate-600">{totalLessons}</p>
+              <p className="text-sm text-slate-600">{statistics.lessons}</p>
             </div>
             <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
               <div className="text-3xl mb-2">📄</div>
               <h4 className="font-semibold text-slate-900 mb-1">Ressources PDF</h4>
-              <p className="text-sm text-slate-600">{totalPdfs}</p>
+              <p className="text-sm text-slate-600">{statistics.pdfs}</p>
             </div>
             <div className="bg-white rounded-lg p-4 text-center border border-gray-200">
               <div className="text-3xl mb-2">👨‍🏫</div>
-              <h4 className="font-semibold text-slate-900 mb-1">Professeur{isTeacher ? ' (Vous)' : 's'}</h4>
-              <p className="text-sm text-slate-600">{totalTeachers}</p>
+              <h4 className="font-semibold text-slate-900 mb-1">
+                Professeur{isTeacher ? ' (Vous)' : 's'}
+              </h4>
+              <p className="text-sm text-slate-600">{statistics.teachers}</p>
             </div>
           </div>
         </div>
@@ -463,7 +516,7 @@ const Dashboard = () => {
       {/* Navigation Mobile */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700">
         <div className="flex justify-around items-center h-16">
-          {['accueil', 'cours', 'progression', 'profil'].map((tab) => (
+          {NAV_TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}

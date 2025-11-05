@@ -19,7 +19,7 @@ export default function Subjects() {
         const isTeacher = user?.role?.name === "teacher" || user?.role?.name === "professor";
         const endpoint = isTeacher
           ? "/users/me?populate[subjects][populate][lessons]=*"
-          : "/subjects?populate[author]=true&populate[lessons]=true"; // Utiliser populate comme demandé
+          : "/subjects?populate[author]=true&populate[lessons]=true"; 
 
         const { data } = await httpClient.get(endpoint);
 
@@ -65,12 +65,12 @@ export default function Subjects() {
               <span className="text-2xl font-bold text-white">📚</span>
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
-              {user?.role?.name === "teacher" || user?.role?.name === "professor"
+              {user?.role?.name === "teacher" 
                 ? "Mes Matières"
                 : "Liste des Matières Disponibles"}
             </h1>
             <p className="text-slate-600">
-              {user?.role?.name === "teacher" || user?.role?.name === "professor"
+              {user?.role?.name === "teacher" 
                 ? "Voici vos matières et leurs leçons."
                 : "Explorez les cours proposés par vos professeurs."}
             </p>
