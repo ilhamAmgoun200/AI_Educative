@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "assessments",
+  "info": {
+    "singularName": "assessment",
+    "pluralName": "assessments",
+    "displayName": "Assessment",
+    "description": "Student assessments and quiz results"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "questions_json": {
+      "type": "json"
+    },
+    "answers_json": {
+      "type": "json"
+    },
+    "score": {
+      "type": "decimal",
+      "precision": 5,
+      "scale": 2
+    },
+    "attempt_number": {
+      "type": "integer"
+    },
+    "feedback": {
+      "type": "text"
+    },
+    "attempt_at": {
+      "type": "datetime"
+    },
+    "lesson": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::lesson.lesson",
+      "inversedBy": "assessments"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "assessments"
+    }
+  }
+}

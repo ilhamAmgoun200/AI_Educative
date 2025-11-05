@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ai_model_usages",
+  "info": {
+    "singularName": "ai-model-usage",
+    "pluralName": "ai-model-usages",
+    "displayName": "AI Model Usage",
+    "description": "Track AI model usage and costs"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "model_name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 255
+    },
+    "tokens_used": {
+      "type": "integer"
+    },
+    "cost": {
+      "type": "decimal",
+      "precision": 10,
+      "scale": 4
+    },
+    "duration_ms": {
+      "type": "integer"
+    },
+    "interactions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::interaction.interaction",
+      "mappedBy": "ai_model_usage"
+    }
+  }
+}

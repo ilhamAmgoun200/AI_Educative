@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "transcripts",
+  "info": {
+    "singularName": "transcript",
+    "pluralName": "transcripts",
+    "displayName": "Transcript",
+    "description": "Session transcripts and summaries"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "summary": {
+      "type": "text"
+    },
+    "keywords": {
+      "type": "text"
+    },
+    "language": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "ai_session": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::ai-session.ai-session",
+      "inversedBy": "transcripts"
+    }
+  }
+}

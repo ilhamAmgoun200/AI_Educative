@@ -107,43 +107,6 @@ export interface AdminApiTokenPermission extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface AdminAuditLog extends Struct.CollectionTypeSchema {
-  collectionName: 'strapi_audit_logs';
-  info: {
-    displayName: 'Audit Log';
-    pluralName: 'audit-logs';
-    singularName: 'audit-log';
-  };
-  options: {
-    draftAndPublish: false;
-    timestamps: false;
-  };
-  pluginOptions: {
-    'content-manager': {
-      visible: false;
-    };
-    'content-type-builder': {
-      visible: false;
-    };
-  };
-  attributes: {
-    action: Schema.Attribute.String & Schema.Attribute.Required;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    date: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'admin::audit-log'> &
-      Schema.Attribute.Private;
-    payload: Schema.Attribute.JSON;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<'oneToOne', 'admin::user'>;
-  };
-}
-
 export interface AdminPermission extends Struct.CollectionTypeSchema {
   collectionName: 'admin_permissions';
   info: {
@@ -496,6 +459,100 @@ export interface ApiAboutAbout extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiAiModelUsageAiModelUsage
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'ai_model_usages';
+  info: {
+    description: 'Track AI model usage and costs';
+    displayName: 'AI Model Usage';
+    pluralName: 'ai-model-usages';
+    singularName: 'ai-model-usage';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    cost: Schema.Attribute.Decimal;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    duration_ms: Schema.Attribute.Integer;
+    interactions: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::interaction.interaction'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ai-model-usage.ai-model-usage'
+    > &
+      Schema.Attribute.Private;
+    model_name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    tokens_used: Schema.Attribute.Integer;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiAiSessionAiSession extends Struct.CollectionTypeSchema {
+  collectionName: 'ai_sessions';
+  info: {
+    description: 'AI tutoring sessions for lessons';
+    displayName: 'AI Session';
+    pluralName: 'ai-sessions';
+    singularName: 'ai-session';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    ai_personality: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    ended_at: Schema.Attribute.DateTime;
+    feedback: Schema.Attribute.Text;
+    interactions: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::interaction.interaction'
+    >;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ai-session.ai-session'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    started_at: Schema.Attribute.DateTime;
+    status: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    summary: Schema.Attribute.Text;
+    transcripts: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::transcript.transcript'
+    >;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
   collectionName: 'articles';
   info: {
@@ -533,6 +590,45 @@ export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiAssessmentAssessment extends Struct.CollectionTypeSchema {
+  collectionName: 'assessments';
+  info: {
+    description: 'Student assessments and quiz results';
+    displayName: 'Assessment';
+    pluralName: 'assessments';
+    singularName: 'assessment';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    answers_json: Schema.Attribute.JSON;
+    attempt_at: Schema.Attribute.DateTime;
+    attempt_number: Schema.Attribute.Integer;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    feedback: Schema.Attribute.Text;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::assessment.assessment'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    questions_json: Schema.Attribute.JSON;
+    score: Schema.Attribute.Decimal;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
   };
 }
 
@@ -632,6 +728,222 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiInteractionInteraction extends Struct.CollectionTypeSchema {
+  collectionName: 'interactions';
+  info: {
+    description: 'User-AI interactions during sessions';
+    displayName: 'Interaction';
+    pluralName: 'interactions';
+    singularName: 'interaction';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    ai_model_usage: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::ai-model-usage.ai-model-usage'
+    >;
+    ai_session: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::ai-session.ai-session'
+    >;
+    content: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::interaction.interaction'
+    > &
+      Schema.Attribute.Private;
+    message_type: Schema.Attribute.Enumeration<
+      ['text', 'audio', 'text+audio']
+    > &
+      Schema.Attribute.DefaultTo<'text'>;
+    metadata: Schema.Attribute.JSON;
+    publishedAt: Schema.Attribute.DateTime;
+    sender: Schema.Attribute.Enumeration<['user', 'ai']> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
+  collectionName: 'lessons';
+  info: {
+    description: 'Educational lessons with content and resources';
+    displayName: 'Lesson';
+    pluralName: 'lessons';
+    singularName: 'lesson';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    ai_sessions: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ai-session.ai-session'
+    >;
+    assessments: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::assessment.assessment'
+    >;
+    content: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    is_published: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::lesson.lesson'
+    > &
+      Schema.Attribute.Private;
+    order_no: Schema.Attribute.Integer;
+    pdf_url: Schema.Attribute.Text;
+    progresses: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::progress.progress'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    subject: Schema.Attribute.Relation<'manyToOne', 'api::subject.subject'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    video_url: Schema.Attribute.Text;
+  };
+}
+
+export interface ApiNotificationNotification
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'notifications';
+  info: {
+    description: 'User notifications';
+    displayName: 'Notification';
+    pluralName: 'notifications';
+    singularName: 'notification';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    is_read: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::notification.notification'
+    > &
+      Schema.Attribute.Private;
+    message: Schema.Attribute.Text;
+    publishedAt: Schema.Attribute.DateTime;
+    type: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiProgressProgress extends Struct.CollectionTypeSchema {
+  collectionName: 'progresses';
+  info: {
+    description: 'User progress tracking for lessons';
+    displayName: 'Progress';
+    pluralName: 'progresses';
+    singularName: 'progress';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    last_interaction_at: Schema.Attribute.DateTime;
+    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::progress.progress'
+    > &
+      Schema.Attribute.Private;
+    progress_percent: Schema.Attribute.Decimal;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiSubjectSubject extends Struct.CollectionTypeSchema {
+  collectionName: 'subjects';
+  info: {
+    description: 'Educational subjects with lessons';
+    displayName: 'Subject';
+    pluralName: 'subjects';
+    singularName: 'subject';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    author: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    lessons: Schema.Attribute.Relation<'oneToMany', 'api::lesson.lesson'>;
+    level: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::subject.subject'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    subject_name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiTabletableTabletable extends Struct.CollectionTypeSchema {
   collectionName: 'tabletables';
   info: {
@@ -653,6 +965,44 @@ export interface ApiTabletableTabletable extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTranscriptTranscript extends Struct.CollectionTypeSchema {
+  collectionName: 'transcripts';
+  info: {
+    description: 'Session transcripts and summaries';
+    displayName: 'Transcript';
+    pluralName: 'transcripts';
+    singularName: 'transcript';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    ai_session: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::ai-session.ai-session'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    keywords: Schema.Attribute.Text;
+    language: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 50;
+      }>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::transcript.transcript'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    summary: Schema.Attribute.Text;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1104,27 +1454,41 @@ export interface PluginUsersPermissionsRole
 
 export interface PluginUsersPermissionsUser
   extends Struct.CollectionTypeSchema {
-  collectionName: 'up_users';
+  collectionName: 'users';
   info: {
     description: '';
     displayName: 'User';
-    name: 'user';
     pluralName: 'users';
     singularName: 'user';
   };
   options: {
     draftAndPublish: false;
-    timestamps: true;
+  };
+  pluginOptions: {
+    'users-permissions': {
+      advanced: {
+        defaultRole: 'authenticated';
+      };
+    };
   };
   attributes: {
+    ai_sessions: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::ai-session.ai-session'
+    >;
+    assessments: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::assessment.assessment'
+    >;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
-    confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
+    confirmationToken: Schema.Attribute.String;
     confirmed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     email: Schema.Attribute.Email &
       Schema.Attribute.Required &
+      Schema.Attribute.Unique &
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
@@ -1134,18 +1498,26 @@ export interface PluginUsersPermissionsUser
       'plugin::users-permissions.user'
     > &
       Schema.Attribute.Private;
+    notifications: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::notification.notification'
+    >;
     password: Schema.Attribute.Password &
-      Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    progresses: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::progress.progress'
+    >;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
+    resetPasswordToken: Schema.Attribute.String;
     role: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.role'
     >;
+    subjects: Schema.Attribute.Relation<'oneToMany', 'api::subject.subject'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1163,7 +1535,6 @@ declare module '@strapi/strapi' {
     export interface ContentTypeSchemas {
       'admin::api-token': AdminApiToken;
       'admin::api-token-permission': AdminApiTokenPermission;
-      'admin::audit-log': AdminAuditLog;
       'admin::permission': AdminPermission;
       'admin::role': AdminRole;
       'admin::session': AdminSession;
@@ -1171,11 +1542,20 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::about.about': ApiAboutAbout;
+      'api::ai-model-usage.ai-model-usage': ApiAiModelUsageAiModelUsage;
+      'api::ai-session.ai-session': ApiAiSessionAiSession;
       'api::article.article': ApiArticleArticle;
+      'api::assessment.assessment': ApiAssessmentAssessment;
       'api::author.author': ApiAuthorAuthor;
       'api::category.category': ApiCategoryCategory;
       'api::global.global': ApiGlobalGlobal;
+      'api::interaction.interaction': ApiInteractionInteraction;
+      'api::lesson.lesson': ApiLessonLesson;
+      'api::notification.notification': ApiNotificationNotification;
+      'api::progress.progress': ApiProgressProgress;
+      'api::subject.subject': ApiSubjectSubject;
       'api::tabletable.tabletable': ApiTabletableTabletable;
+      'api::transcript.transcript': ApiTranscriptTranscript;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

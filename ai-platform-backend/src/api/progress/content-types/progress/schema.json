@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "progresses",
+  "info": {
+    "singularName": "progress",
+    "pluralName": "progresses",
+    "displayName": "Progress",
+    "description": "User progress tracking for lessons"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "status": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "progress_percent": {
+      "type": "decimal",
+      "precision": 5,
+      "scale": 2
+    },
+    "last_interaction_at": {
+      "type": "datetime"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "progresses"
+    },
+    "lesson": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::lesson.lesson",
+      "inversedBy": "progresses"
+    }
+  }
+}
