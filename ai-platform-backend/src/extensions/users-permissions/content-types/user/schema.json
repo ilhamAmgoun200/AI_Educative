@@ -87,6 +87,39 @@
       "relation": "oneToMany",
       "target": "api::notification.notification",
       "mappedBy": "user"
+    },
+
+     "firstname": {
+      "type": "string"
+
+    },
+    "lastname": {
+      "type": "string"
+
+    },
+    "speciality": {
+      "type": "string"
+
+    },
+    "bio": {
+      "type": "text"
+
+    },
+    "experience": {
+      "type": "string"
+
+    },
+    "website": {
+      "type": "string"
+
+    },
+    "phone": {
+      "type": "string"
+
+    },
+    "avatar": {
+      "type": "media"
+
     }
   }
 }
