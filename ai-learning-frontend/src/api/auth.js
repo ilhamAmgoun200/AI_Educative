@@ -1,7 +1,7 @@
 import httpClient from "./httpClient";
 import axios from "axios";
 import { CONFIG } from "../config";
-import { saveUser, clearAuthData} from "../utils/localStorage";
+import { saveUser, clearAuthData, getToken } from "../utils/localStorage"; // AJOUT: getToken
 
 /**
  * 🔐 Connexion utilisateur
@@ -58,11 +58,37 @@ export const login = async (email, password) => {
  */
 export const getMe = async () => {
   try {
-    const { data } = await httpClient.get("/users/me?populate=role");
+    const token = getToken(); // RÉCUPÉRER LE TOKEN
+    
+    if (!token) {
+      throw new Error("Aucun token d'authentification trouvé");
+    }
+
+    // UTILISER AXIOS DIRECTEMENT AU LIEU DE httpClient
+    const { data } = await axios.get(
+      `${CONFIG.API_URL}/users/me?populate=role,subjects`, // AJOUT: populate=subjects
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    
+    console.log("🔍 getMe() - Données utilisateur:", data);
+    console.log("🎭 Rôle peuplé:", data.role);
+    console.log("📚 Subjects:", data.subjects);
+    
     saveUser(data);
     return data;
   } catch (error) {
     console.error("❌ Erreur lors de la récupération du profil :", error.response?.data || error.message);
+    
+    // Si erreur 401 (non autorisé), déconnecter l'utilisateur
+    if (error.response?.status === 401) {
+      clearAuthData();
+      throw new Error("Session expirée. Veuillez vous reconnecter.");
+    }
+    
     throw error;
   }
 };

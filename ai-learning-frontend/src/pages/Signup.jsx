@@ -1,17 +1,18 @@
-
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../api/auth";
+import { AuthContext } from "../contexts/authContext"; // IMPORT AJOUTÉ
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { loginUser } = useContext(AuthContext); // UTILISATION DU CONTEXTE
 
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student",
+    role: "student", // Défaut corrigé à "student"
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +68,7 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
 
     if (!validateForm()) {
       return;
@@ -75,24 +77,29 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      await register(
+      console.log("🔄 Inscription en cours avec rôle:", formData.role);
+      
+      // Appel à l'API d'inscription
+      const authData = await register(
         formData.username,
         formData.email,
         formData.password,
         formData.role
       );
 
+      console.log("✅ Inscription réussie:", authData);
       
-      setSuccessMessage("Compte créé avec succès ! Redirection vers la page de connexion...");
+      // CONNEXION AUTOMATIQUE APRÈS INSCRIPTION
+      if (authData && authData.jwt && authData.user) {
+        setSuccessMessage(`Compte ${formData.role} créé avec succès ! Connexion automatique...`);
+        
+        // Utiliser le AuthContext pour connecter l'utilisateur
+        // Cela déclenchera la redirection automatique selon le rôle
+        loginUser(authData);
+      } else {
+        throw new Error("Données d'authentification manquantes");
+      }
       
-      
-      setTimeout(() => {
-        navigate("/login", { 
-          state: { 
-            message: "Votre compte a été créé avec succès. Veuillez vous connecter." 
-          } 
-        });
-      }, 2000);
     } catch (err) {
       console.error("Erreur lors de l'inscription :", err.response?.data || err.message);
       
@@ -159,7 +166,7 @@ export default function Signup() {
               )}
             </div>
 
-          
+            {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
                 Email
@@ -181,22 +188,46 @@ export default function Signup() {
               )}
             </div>
 
-           
+            {/* Sélection du rôle - AMÉLIORÉ */}
             <div className="space-y-2">
               <label htmlFor="role" className="block text-sm font-semibold text-slate-700">
                 Je suis
               </label>
-              <select
-                id="role"
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, role: "student" }))}
+                  className={`p-3 border-2 rounded-xl text-center transition-all duration-200 ${
+                    formData.role === "student" 
+                      ? "border-blue-500 bg-blue-50 text-blue-700" 
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="font-medium">👨‍🎓 Étudiant</div>
+                  <div className="text-xs opacity-70">Apprendre</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, role: "teacher" }))}
+                  className={`p-3 border-2 rounded-xl text-center transition-all duration-200 ${
+                    formData.role === "teacher" 
+                      ? "border-green-500 bg-green-50 text-green-700" 
+                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="font-medium">👨‍🏫 Professeur</div>
+                  <div className="text-xs opacity-70">Enseigner</div>
+                </button>
+              </div>
+              <input
+                type="hidden"
                 name="role"
                 value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 required
-              >
-                <option value="student">student</option>
-                <option value="teacher">teacher</option>
-              </select>
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Sélectionné: <span className="font-semibold capitalize">{formData.role}</span>
+              </p>
             </div>
 
             {/* Mot de passe */}
@@ -271,7 +302,7 @@ export default function Signup() {
                   Création du compte...
                 </div>
               ) : (
-                "Créer mon compte"
+                `Créer mon compte ${formData.role === 'teacher' ? 'professeur' : 'étudiant'}`
               )}
             </button>
           </form>
@@ -298,4 +329,3 @@ export default function Signup() {
     </div>
   );
 }
-

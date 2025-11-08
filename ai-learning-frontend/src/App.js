@@ -7,6 +7,9 @@ import Dashboard from './pages/Dashboard';
 import HomePage from './pages/HomePage';
 import CourseDetail from './pages/CourseDetail';
 import Subjects from './pages/subjects';
+import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherProfile from './pages/TeacherProfile';
+import AddCourse from './pages/AddCourse';
 
 function App() {
   return (
@@ -20,6 +23,10 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/subjects" element={<Subjects />} />
             <Route path="/course/:courseId" element={<CourseDetail />} />
+           
+           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+           <Route path="/teacher/profile" element={<TeacherProfile />} />
+           <Route path="/teacher/add-course" element={<AddCourse />} />
           </Routes>
         </div>
       </AuthProvider>
