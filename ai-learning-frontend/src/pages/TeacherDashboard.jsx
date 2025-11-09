@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/authContext';
 import { teacherService } from '../api/api';
-import { getMe } from '../api/auth';
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -21,9 +20,20 @@ const TeacherDashboard = () => {
   useEffect(() => {
     console.log('🔵 TeacherDashboard - User context:', user);
     console.log('🔵 TeacherDashboard - Auth loading:', authLoading);
+    console.log('🔵 TeacherDashboard - User role:', user?.role?.name);
     
-    if (user && !authLoading) {
-      console.log('🟢 User authentifié, chargement des données...');
+     if (user && !authLoading) {
+      // VÉRIFIER SI L'UTILISATEUR EST BIEN UN TEACHER
+      const userRole = user?.role?.name;
+      console.log('🎭 Rôle dans TeacherDashboard:', userRole);
+      
+      if (userRole !== 'teacher') {
+        console.log('❌ Accès refusé - Rôle non teacher:', userRole);
+        navigate('/dashboard');
+        return;
+      }
+      
+      console.log('🟢 User authentifié comme teacher, chargement des données...');
       fetchTeacherData();
     } else if (!authLoading && !user) {
       console.log('🔴 Pas d\'utilisateur, redirection vers login');
@@ -33,17 +43,12 @@ const TeacherDashboard = () => {
 
   const fetchTeacherData = async () => {
     try {
-      console.log('🟡 Début fetchTeacherData pour user:', user.id);
+      console.log('🟡 Début fetchTeacherData');
       setLoading(true);
       setError(null);
       
-      // Vérifier qu'on a bien un user avec ID
-      if (!user || !user.id) {
-        throw new Error('Utilisateur non authentifié');
-      }
-
-      // Récupérer les subjects du professeur avec SON ID
-      const subjectsResponse = await teacherService.getMySubjects(user.id);
+      // Récupérer les subjects du professeur
+      const subjectsResponse = await teacherService.getMySubjects();
       console.log('🟢 Réponse subjects:', subjectsResponse);
 
       // Formater les données
@@ -71,33 +76,13 @@ const TeacherDashboard = () => {
       setStats({
         totalSubjects,
         totalLessons,
-        totalStudents: 0,
-        averageRating: 4.5
+        totalStudents: 0, // À implémenter avec les relations étudiants
+        averageRating: 4.5 // À implémenter avec le système de notation
       });
 
     } catch (error) {
       console.error('🔴 Erreur dans fetchTeacherData:', error);
-      setError('Erreur de chargement: ' + error.message);
-      
-      // Données de démo en cas d'erreur
-      setSubjects([
-        {
-          id: 1,
-          subject_name: 'Mathématiques Démo',
-          description: 'Cours de démonstration',
-          level: 'Débutant',
-          lessons_count: 3,
-          is_published: true,
-          createdDate: new Date().toISOString()
-        }
-      ]);
-      
-      setStats({
-        totalSubjects: 1,
-        totalLessons: 3,
-        totalStudents: 0,
-        averageRating: 4.5
-      });
+      setError('Erreur de chargement: ' + (error.response?.data?.error?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -136,25 +121,6 @@ const TeacherDashboard = () => {
             className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
           >
             Se connecter
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Vérifier que l'utilisateur est bien un professeur
-  const userRole = user.role?.name || user.role?.type;
-  if (userRole !== 'teacher') {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-white text-xl mb-4">Accès non autorisé</div>
-          <p className="text-gray-400">Cette page est réservée aux professeurs.</p>
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Aller au dashboard étudiant
           </button>
         </div>
       </div>

@@ -66,7 +66,7 @@ export const getMe = async () => {
 
     // UTILISER AXIOS DIRECTEMENT AU LIEU DE httpClient
     const { data } = await axios.get(
-      `${CONFIG.API_URL}/users/me?populate=role,subjects`, // AJOUT: populate=subjects
+      `${CONFIG.API_URL}/users/me?populate=role,subjects`, // DÉJÀ CORRECT - populate=role,subjects
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -74,9 +74,25 @@ export const getMe = async () => {
       }
     );
     
-    console.log("🔍 getMe() - Données utilisateur:", data);
+    // DEBUG DÉTAILLÉ
+    console.log("🔍 getMe() - Données utilisateur COMPLÈTES:", data);
     console.log("🎭 Rôle peuplé:", data.role);
+    console.log("📋 Structure du rôle:", {
+      id: data.role?.id,
+      name: data.role?.name,
+      type: data.role?.type,
+      description: data.role?.description
+    });
     console.log("📚 Subjects:", data.subjects);
+    
+    // VÉRIFICATION CRITIQUE DU RÔLE
+    if (!data.role) {
+      console.error("❌ CRITIQUE: Rôle non peuplé dans la réponse!");
+    } else if (!data.role.name) {
+      console.error("❌ CRITIQUE: Rôle sans propriété 'name'!", data.role);
+    } else {
+      console.log("✅ Rôle correctement peuplé:", data.role.name);
+    }
     
     saveUser(data);
     return data;

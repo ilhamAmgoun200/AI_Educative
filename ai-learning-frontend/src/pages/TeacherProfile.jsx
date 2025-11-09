@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/authContext';
-import { getMe } from '../api/auth';
 import { teacherService } from '../api/api';
 
 const TeacherProfile = () => {
@@ -39,13 +38,8 @@ const TeacherProfile = () => {
       setLoading(true);
       setError(null);
       
-      // Vérifier qu'on a un user valide
-      if (!user || !user.id) {
-        throw new Error('Utilisateur non authentifié');
-      }
-
-      const userProfile = await getMe();
-      console.log('🟢 Profil chargé pour user:', userProfile.id);
+      const userProfile = await teacherService.getProfile();
+      console.log('🟢 Profil chargé:', userProfile);
 
       setFormData({
         username: userProfile.username || '',
@@ -61,7 +55,7 @@ const TeacherProfile = () => {
 
     } catch (error) {
       console.error('Erreur lors du chargement du profil:', error);
-      setError('Erreur de chargement: ' + error.message);
+      setError('Erreur de chargement: ' + (error.response?.data?.error?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -80,18 +74,13 @@ const TeacherProfile = () => {
     setSaving(true);
 
     try {
-      // Vérifier qu'on a un user valide
-      if (!user || !user.id) {
-        throw new Error('Utilisateur non authentifié');
-      }
-
-      console.log('🟡 Sauvegarde du profil pour user:', user.id);
+      console.log('🟡 Sauvegarde du profil');
       await teacherService.updateProfile(formData);
       alert('Profil mis à jour avec succès!');
-      await fetchProfile();
+      await fetchProfile(); // Recharger les données
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      alert('Erreur lors de la mise à jour du profil: ' + error.message);
+      alert('Erreur lors de la mise à jour du profil: ' + (error.response?.data?.error?.message || error.message));
     } finally {
       setSaving(false);
     }
@@ -123,25 +112,6 @@ const TeacherProfile = () => {
             className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
           >
             Se connecter
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Vérifier que l'utilisateur est bien un professeur
-  const userRole = user.role?.name || user.role?.type;
-  if (userRole !== 'teacher') {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="text-xl mb-4">Accès non autorisé</div>
-          <p>Cette page est réservée aux professeurs.</p>
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Aller au dashboard étudiant
           </button>
         </div>
       </div>
@@ -242,7 +212,7 @@ const TeacherProfile = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Prénom *
+                    Prénom
                   </label>
                   <input
                     type="text"
@@ -250,13 +220,12 @@ const TeacherProfile = () => {
                     value={formData.firstname}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Nom *
+                    Nom
                   </label>
                   <input
                     type="text"
@@ -264,7 +233,6 @@ const TeacherProfile = () => {
                     value={formData.lastname}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
                   />
                 </div>
               </div>

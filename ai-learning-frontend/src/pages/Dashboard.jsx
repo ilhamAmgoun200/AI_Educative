@@ -218,7 +218,7 @@ const Dashboard = () => {
     };
 
     loadData();
-  }, [user]);
+  }, [user, isTeacher]);
 
   // Calculer le progrès utilisateur
   const userProgress = {

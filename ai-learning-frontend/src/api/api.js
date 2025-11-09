@@ -1,4 +1,4 @@
-import httpClient from './httpClient';
+/*import httpClient from './httpClient';
 
 export const teacherService = {
   // Récupérer le profil du professeur
@@ -97,4 +97,34 @@ export const apiServices = {
   teacherService
 };
 
-export default apiServices;
+export default apiServices;*/
+
+import httpClient from './httpClient';
+
+export const teacherService = {
+  // Profile
+  getProfile: () => httpClient.get(`/users/me?populate=*`),
+  updateProfile: (data) => httpClient.put(`/users/me`, data),
+  
+  // Subjects
+  getMySubjects: () => httpClient.get(`/subjects?filters[author][id][$eq]=me&populate=lessons`),
+  getSubject: (subjectId) => httpClient.get(`/subjects/${subjectId}?populate=lessons`),
+  createSubject: (data) => httpClient.post('/subjects', { data }),
+  updateSubject: (subjectId, data) => httpClient.put(`/subjects/${subjectId}`, { data }),
+  deleteSubject: (subjectId) => httpClient.delete(`/subjects/${subjectId}`),
+  
+  // Lessons
+  getSubjectLessons: (subjectId) => httpClient.get(`/lessons?filters[subject][id][$eq]=${subjectId}`),
+  createLesson: (data) => httpClient.post('/lessons', { data }),
+  updateLesson: (lessonId, data) => httpClient.put(`/lessons/${lessonId}`, { data }),
+  deleteLesson: (lessonId) => httpClient.delete(`/lessons/${lessonId}`),
+  
+  // File Upload
+  uploadFile: (file) => {
+    const formData = new FormData();
+    formData.append('files', file);
+    return httpClient.post('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+};
