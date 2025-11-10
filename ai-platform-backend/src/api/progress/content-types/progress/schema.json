@@ -17,9 +17,7 @@
       "maxLength": 50
     },
     "progress_percent": {
-      "type": "decimal",
-      "precision": 5,
-      "scale": 2
+      "type": "decimal"
     },
     "last_interaction_at": {
       "type": "datetime"
@@ -28,12 +26,6 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
-      "inversedBy": "progresses"
-    },
-    "lesson": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::lesson.lesson",
       "inversedBy": "progresses"
     }
   }

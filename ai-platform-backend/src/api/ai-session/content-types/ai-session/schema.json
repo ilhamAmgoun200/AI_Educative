@@ -32,12 +32,6 @@
     "ended_at": {
       "type": "datetime"
     },
-    "lesson": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::lesson.lesson",
-      "inversedBy": "ai_sessions"
-    },
     "user": {
       "type": "relation",
       "relation": "manyToOne",

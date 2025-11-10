@@ -14,12 +14,19 @@
   "attributes": {
     "sender": {
       "type": "enumeration",
-      "enum": ["user", "ai"],
+      "enum": [
+        "user",
+        "ai"
+      ],
       "required": true
     },
     "message_type": {
       "type": "enumeration",
-      "enum": ["text", "audio", "text+audio"],
+      "enum": [
+        "text",
+        "audio",
+        "text+audio"
+      ],
       "default": "text"
     },
     "content": {

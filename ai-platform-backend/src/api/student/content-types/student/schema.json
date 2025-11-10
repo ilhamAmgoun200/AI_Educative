@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "students",
+  "info": {
+    "singularName": "student",
+    "pluralName": "students",
+    "displayName": "student"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "birth_date": {
+      "type": "date"
+    },
+    "branch": {
+      "type": "enumeration",
+      "enum": [
+        "SVT",
+        "PC",
+        "SMA",
+        "SMB"
+      ]
+    },
+    "establishment": {
+      "type": "string"
+    },
+    "is_active": {
+      "type": "boolean"
+    },
+    "password": {
+      "type": "string"
+    },
+    "cin": {
+      "type": "string"
+    },
+    "cne": {
+      "type": "string"
+    }
+  }
+}

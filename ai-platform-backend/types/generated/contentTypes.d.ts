@@ -525,7 +525,6 @@ export interface ApiAiSessionAiSession extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::interaction.interaction'
     >;
-    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -612,7 +611,6 @@ export interface ApiAssessmentAssessment extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     feedback: Schema.Attribute.Text;
-    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -784,18 +782,14 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    ai_sessions: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::ai-session.ai-session'
+    course_pdf: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios',
+      true
     >;
-    assessments: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::assessment.assessment'
-    >;
-    content: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
     is_published: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -804,13 +798,8 @@ export interface ApiLessonLesson extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     order_no: Schema.Attribute.Integer;
-    pdf_url: Schema.Attribute.Text;
-    progresses: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::progress.progress'
-    >;
     publishedAt: Schema.Attribute.DateTime;
-    subject: Schema.Attribute.Relation<'manyToOne', 'api::subject.subject'>;
+    teacher: Schema.Attribute.Relation<'manyToOne', 'api::teacher.teacher'>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
@@ -878,7 +867,6 @@ export interface ApiProgressProgress extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     last_interaction_at: Schema.Attribute.DateTime;
-    lesson: Schema.Attribute.Relation<'manyToOne', 'api::lesson.lesson'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -898,6 +886,44 @@ export interface ApiProgressProgress extends Struct.CollectionTypeSchema {
       'manyToOne',
       'plugin::users-permissions.user'
     >;
+  };
+}
+
+export interface ApiStudentStudent extends Struct.CollectionTypeSchema {
+  collectionName: 'students';
+  info: {
+    displayName: 'student';
+    pluralName: 'students';
+    singularName: 'student';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    birth_date: Schema.Attribute.Date;
+    branch: Schema.Attribute.Enumeration<['SVT', 'PC', 'SMA', 'SMB']>;
+    cin: Schema.Attribute.String;
+    cne: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    email: Schema.Attribute.Email;
+    establishment: Schema.Attribute.String;
+    first_name: Schema.Attribute.String;
+    is_active: Schema.Attribute.Boolean;
+    last_name: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::student.student'
+    > &
+      Schema.Attribute.Private;
+    password: Schema.Attribute.String;
+    phone: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -921,7 +947,6 @@ export interface ApiSubjectSubject extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
-    lessons: Schema.Attribute.Relation<'oneToMany', 'api::lesson.lesson'>;
     level: Schema.Attribute.String &
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 50;
@@ -965,6 +990,46 @@ export interface ApiTabletableTabletable extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTeacherTeacher extends Struct.CollectionTypeSchema {
+  collectionName: 'teachers';
+  info: {
+    displayName: 'teacher';
+    pluralName: 'teachers';
+    singularName: 'teacher';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    cin: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    email: Schema.Attribute.Email;
+    establishment: Schema.Attribute.String;
+    experience_years: Schema.Attribute.Integer;
+    first_name: Schema.Attribute.String;
+    is_active: Schema.Attribute.Boolean;
+    last_name: Schema.Attribute.String;
+    lessons: Schema.Attribute.Relation<'oneToMany', 'api::lesson.lesson'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::teacher.teacher'
+    > &
+      Schema.Attribute.Private;
+    password: Schema.Attribute.String;
+    phone: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    subject: Schema.Attribute.Enumeration<
+      ['math', 'physique', 'svt', 'arabe', 'french', 'philosophy', 'english']
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1561,8 +1626,10 @@ declare module '@strapi/strapi' {
       'api::lesson.lesson': ApiLessonLesson;
       'api::notification.notification': ApiNotificationNotification;
       'api::progress.progress': ApiProgressProgress;
+      'api::student.student': ApiStudentStudent;
       'api::subject.subject': ApiSubjectSubject;
       'api::tabletable.tabletable': ApiTabletableTabletable;
+      'api::teacher.teacher': ApiTeacherTeacher;
       'api::transcript.transcript': ApiTranscriptTranscript;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

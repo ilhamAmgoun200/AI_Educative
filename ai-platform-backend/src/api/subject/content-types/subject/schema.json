@@ -14,8 +14,8 @@
   "attributes": {
     "subject_name": {
       "type": "string",
-      "required": true,
-      "maxLength": 50
+      "maxLength": 50,
+      "required": true
     },
     "description": {
       "type": "text"
@@ -29,12 +29,6 @@
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "subjects"
-    },
-    "lessons": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::lesson.lesson",
-      "mappedBy": "subject"
     }
   }
 }

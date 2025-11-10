@@ -14,13 +14,10 @@
   "attributes": {
     "title": {
       "type": "string",
-      "required": true,
-      "maxLength": 255
+      "maxLength": 255,
+      "required": true
     },
-    "content": {
-      "type": "text"
-    },
-    "pdf_url": {
+    "description": {
       "type": "text"
     },
     "video_url": {
@@ -33,29 +30,21 @@
       "type": "boolean",
       "default": false
     },
-    "subject": {
+    "course_pdf": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "teacher": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::subject.subject",
+      "target": "api::teacher.teacher",
       "inversedBy": "lessons"
-    },
-    "ai_sessions": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::ai-session.ai-session",
-      "mappedBy": "lesson"
-    },
-    "assessments": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::assessment.assessment",
-      "mappedBy": "lesson"
-    },
-    "progresses": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::progress.progress",
-      "mappedBy": "lesson"
     }
   }
 }

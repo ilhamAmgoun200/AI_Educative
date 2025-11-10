@@ -19,9 +19,7 @@
       "type": "json"
     },
     "score": {
-      "type": "decimal",
-      "precision": 5,
-      "scale": 2
+      "type": "decimal"
     },
     "attempt_number": {
       "type": "integer"
@@ -31,12 +29,6 @@
     },
     "attempt_at": {
       "type": "datetime"
-    },
-    "lesson": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::lesson.lesson",
-      "inversedBy": "assessments"
     },
     "user": {
       "type": "relation",

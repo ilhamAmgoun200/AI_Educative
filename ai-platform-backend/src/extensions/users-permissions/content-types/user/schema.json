@@ -1,4 +1,5 @@
 {
+  "kind": "collectionType",
   "collectionName": "users",
   "info": {
     "displayName": "User",
@@ -55,9 +56,6 @@
       "relation": "manyToOne",
       "target": "plugin::users-permissions.role"
     },
-
-
-
     "subjects": {
       "type": "relation",
       "relation": "oneToMany",
@@ -88,38 +86,29 @@
       "target": "api::notification.notification",
       "mappedBy": "user"
     },
-
-     "firstname": {
+    "firstname": {
       "type": "string"
-
     },
     "lastname": {
       "type": "string"
-
     },
     "speciality": {
       "type": "string"
-
     },
     "bio": {
       "type": "text"
-
     },
     "experience": {
       "type": "string"
-
     },
     "website": {
       "type": "string"
-
     },
     "phone": {
       "type": "string"
-
     },
     "avatar": {
       "type": "media"
-
     }
   }
 }
