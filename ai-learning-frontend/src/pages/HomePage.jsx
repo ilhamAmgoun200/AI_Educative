@@ -77,7 +77,7 @@ const HomePage = () => {
   };
 
   const handleGetStarted = () => {
-    navigate('/login');
+    navigate('/loginn');
   };
 
   return (
@@ -104,7 +104,7 @@ const HomePage = () => {
             {/* Boutons Connexion/Inscription */}
             <div className="flex items-center space-x-4">
               <button 
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/loginn')}
                 className="text-gray-300 hover:text-white transition-colors hidden md:block"
               >
                 Se connecter

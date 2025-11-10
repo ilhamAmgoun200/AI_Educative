@@ -1,35 +1,61 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/authContext';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import HomePage from './pages/HomePage';
 import CourseDetail from './pages/CourseDetail';
-import Subjects from './pages/subjects';
-import TeacherDashboard from './pages/TeacherDashboard';
-import TeacherProfile from './pages/TeacherProfile';
-import AddCourse from './pages/AddCourse';
+
+import RegistrationForm from './pages/inscription';
+import DashboardStudent from './pages/DashboardStudent';
+import DashboardTeacher from './pages/DashboardTeacher';
+import ProtectedRoute from './pages/ProtectedRoute';
+import LoginForm from './pages/LoginForm';
+import CreateLesson from './pages/CreateLesson';
 
 function App() {
   return (
     <Router>
-      <AuthProvider>
         <div className="App">
           <Routes>
+
+            
             <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/subjects" element={<Subjects />} />
+           
             <Route path="/course/:courseId" element={<CourseDetail />} />
            
-           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-           <Route path="/teacher/profile" element={<TeacherProfile />} />
-           <Route path="/teacher/add-course" element={<AddCourse />} />
+           <Route path="/register" element={<RegistrationForm />} />
+           <Route path="/loginn" element={<LoginForm />} />
+
+
+          <Route 
+          path="/dashboard-student" 
+          element={
+            <ProtectedRoute requiredUserType="student">
+              <DashboardStudent />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard-teacher" 
+          element={
+            <ProtectedRoute requiredUserType="teacher">
+              <DashboardTeacher />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+  path="/create-lesson" 
+  element={
+    <ProtectedRoute requiredUserType="teacher">
+      <CreateLesson />
+    </ProtectedRoute>
+  } 
+/>
+
+           
           </Routes>
         </div>
-      </AuthProvider>
+      
     </Router>
   );
 }
