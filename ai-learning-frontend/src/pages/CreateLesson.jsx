@@ -50,103 +50,100 @@ const CreateLesson = () => {
   };
 
   // ✅ MÉTHODE SIMPLIFIÉE ET CORRECTE
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!teacherId) {
-      setError('❌ Erreur: Impossible de récupérer votre identifiant. Veuillez vous reconnecter.');
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!teacherId) {
+    setError('❌ Erreur: Impossible de récupérer votre identifiant. Veuillez vous reconnecter.');
+    return;
+  }
 
-    setLoading(true);
-    setError('');
-    setSuccess('');
+  setLoading(true);
+  setError('');
+  setSuccess('');
 
-    try {
-      // ✅ MÉTHODE UNIQUE: Création avec FormData pour tout gérer
-      const formDataToSend = new FormData();
-      
-      // ✅ Structure des données pour Strapi v4
-      const lessonData = {
+  try {
+    // ✅ ÉTAPE 1: Créer le lesson d'abord SANS le PDF
+    const lessonData = {
+      data: {  // ← IMPORTANT: wrapper dans "data"
         title: formData.title,
         description: formData.description,
         video_url: formData.video_url,
         order_no: formData.order_no ? parseInt(formData.order_no) : null,
         is_published: formData.is_published,
-        teacher: teacherId // ✅ ID direct pour la relation
-      };
-
-      console.log('📤 Données du lesson:', lessonData);
-      
-      // ✅ Ajouter les données au FormData
-      formDataToSend.append('data', JSON.stringify(lessonData));
-      
-      // ✅ Ajouter le fichier PDF si présent (format correct pour Strapi)
-      if (formData.course_pdf) {
-        formDataToSend.append('files.course_pdf', formData.course_pdf);
-        console.log('📎 Fichier PDF ajouté:', formData.course_pdf.name);
+        teacher: teacherId
       }
+    };
 
-      console.log('🚀 Envoi à Strapi...');
+    console.log('📤 Étape 1: Création du lesson:', lessonData);
 
-      const response = await axios.post('http://localhost:1337/api/lessons', formDataToSend, {
+    const lessonResponse = await axios.post(
+      'http://localhost:1337/api/lessons',
+      lessonData,
+      {
         headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      console.log('✅ Réponse Strapi:', response.data);
-      
-      // Vérifier si le lesson a bien été créé avec le teacher
-      if (response.data.data) {
-        const createdLesson = response.data.data;
-        console.log('📝 Lesson créé:', createdLesson);
-        
-        if (createdLesson.attributes.teacher && createdLesson.attributes.teacher.data) {
-          console.log('👨‍🏫 Teacher associé:', createdLesson.attributes.teacher.data.id);
-        }
-        
-        if (createdLesson.attributes.course_pdf && createdLesson.attributes.course_pdf.data) {
-          console.log('📄 PDF associé:', createdLesson.attributes.course_pdf.data);
+          'Content-Type': 'application/json',
         }
       }
+    );
 
-      setSuccess('✅ Cours créé avec succès!');
-      
-      setTimeout(() => {
-        navigate('/dashboard-teacher');
-      }, 2000);
+    console.log('✅ Lesson créé:', lessonResponse.data);
+    const createdLessonId = lessonResponse.data.data.id;
 
-    } catch (error) {
-      console.error('❌ Erreur création cours:', error);
+    // ✅ ÉTAPE 2: Upload du PDF si présent
+    if (formData.course_pdf) {
+      console.log('📎 Étape 2: Upload du PDF...');
       
-      if (error.response) {
-        console.log('📋 Détails erreur:', error.response.data);
-        
-        // ✅ Analyser l'erreur spécifique
-        if (error.response.data.error) {
-          const strapiError = error.response.data.error;
-          console.log('🔍 Erreur Strapi:', strapiError);
-          
-          if (strapiError.name === 'ValidationError') {
-            setError(`❌ Erreur de validation: ${strapiError.message}`);
-          } else if (strapiError.details) {
-            setError(`❌ Erreur: ${JSON.stringify(strapiError.details)}`);
-          } else {
-            setError(`❌ Erreur ${error.response.status}: ${strapiError.message}`);
+      const formDataToSend = new FormData();
+      formDataToSend.append('files', formData.course_pdf);
+      formDataToSend.append('ref', 'api::lesson.lesson'); // Type de la collection
+      formDataToSend.append('refId', createdLessonId);    // ID du lesson créé
+      formDataToSend.append('field', 'course_pdf');       // Nom du champ
+
+      const uploadResponse = await axios.post(
+        'http://localhost:1337/api/upload',
+        formDataToSend,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
           }
-        } else {
-          setError(`❌ Erreur ${error.response.status}: Requête invalide`);
         }
-      } else if (error.request) {
-        setError('❌ Impossible de contacter le serveur Strapi');
-      } else {
-        setError('❌ Erreur inattendue: ' + error.message);
-      }
-    } finally {
-      setLoading(false);
+      );
+
+      console.log('✅ PDF uploadé:', uploadResponse.data);
     }
-  };
+
+    setSuccess('✅ Cours créé avec succès!');
+    
+    setTimeout(() => {
+      navigate('/dashboard-teacher');
+    }, 2000);
+
+  } catch (error) {
+    console.error('❌ Erreur complète:', error);
+    
+    if (error.response) {
+      console.log('📋 Status:', error.response.status);
+      console.log('📋 Data:', error.response.data);
+      
+      const errorDetails = error.response.data?.error?.details?.errors || [];
+      const errorMessage = error.response.data?.error?.message || 'Erreur inconnue';
+      
+      if (errorDetails.length > 0) {
+        const detailsText = errorDetails.map(e => `${e.path}: ${e.message}`).join(', ');
+        setError(`❌ Erreur de validation: ${detailsText}`);
+      } else {
+        setError(`❌ Erreur ${error.response.status}: ${errorMessage}`);
+      }
+    } else if (error.request) {
+      setError('❌ Impossible de contacter le serveur Strapi. Vérifiez qu\'il est démarré.');
+    } else {
+      setError('❌ Erreur: ' + error.message);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ✅ MÉTHODE ALTERNATIVE si la première échoue
   const tryAlternativeMethod = async () => {

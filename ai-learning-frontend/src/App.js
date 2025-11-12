@@ -10,6 +10,8 @@ import DashboardTeacher from './pages/DashboardTeacher';
 import ProtectedRoute from './pages/ProtectedRoute';
 import LoginForm from './pages/LoginForm';
 import CreateLesson from './pages/CreateLesson';
+import EditLesson from './pages/EditLesson';
+import MyLessons from './pages/MyLessons';
 
 function App() {
   return (
@@ -34,6 +36,10 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/edit-lesson/:lessonId" element={<EditLesson />} />
+        <Route path="/my-lessons" element={<MyLessons />} />
+
+
         <Route 
           path="/dashboard-teacher" 
           element={
