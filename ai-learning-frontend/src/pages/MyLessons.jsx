@@ -59,38 +59,54 @@ const MyLessons = () => {
     }
   };
 
-  const handleViewLesson = (lessonId) => {
-    console.log('👁️ Voir lesson ID:', lessonId);
-    // Redirige vers la page d'édition pour voir les détails
-    navigate(`/edit-lesson/${lessonId}`);
-  };
+const handleViewLesson = (documentId) => {
+  navigate(`/lesson/${documentId}`);
+};
 
-  const handleEditLesson = (lessonId) => {
-    console.log('✏️ Modifier lesson ID:', lessonId);
-    navigate(`/edit-lesson/${lessonId}`);
-  };
-
-  const handleDeleteLesson = async (lessonId, lessonTitle) => {
-  if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le cours "${lessonTitle}" ?`)) {
-    return;
-  }
+const handleEditLesson = async (documentId) => {
+  const title = prompt("Nouveau titre ?");
+  if (!title) return;
+  
+  const description = prompt("Nouvelle description ?");
+  if (!description) return;
 
   try {
     const token = localStorage.getItem('authToken');
-    
-    await axios.delete(`http://localhost:1337/api/lessons/${lessonId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    
-    alert('✅ Cours supprimé avec succès');
+
+    await axios.put(
+      `http://localhost:1337/api/lessons/${documentId}`,
+      { data: { title, description } },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    alert("Cours mis à jour !");
     fetchLessons();
   } catch (error) {
-    console.error('Erreur suppression:', error);
-    alert('❌ Erreur lors de la suppression du cours');
+    console.error(error.response || error);
+    alert("Erreur lors de la modification");
   }
 };
+
+
+const handleDeleteLesson = async (documentId, lessonTitle) => {
+  if (!window.confirm(`Voulez-vous vraiment supprimer "${lessonTitle}" ?`)) return;
+
+  try {
+    const token = localStorage.getItem('authToken');
+
+    await axios.delete(`http://localhost:1337/api/lessons/${documentId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    alert("Cours supprimé !");
+    fetchLessons();
+  } catch (error) {
+    console.error(error.response || error);
+    alert("Erreur lors de la suppression");
+  }
+};
+
+
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -239,28 +255,20 @@ const MyLessons = () => {
                       {/* Boutons d'action */}
                       <div className="flex gap-2">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewLesson(lesson.id);
-                          }}
+                           onClick={(e) => { e.stopPropagation(); handleViewLesson(lesson.documentId); }}
                           className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-all font-semibold"
                         >
                           👁️ Voir
                         </button>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditLesson(lesson.id);
-                          }}
+                            onClick={(e) => { e.stopPropagation(); handleEditLesson(lesson.documentId); }}
+
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-all font-semibold"
                         >
                           ✏️ Modifier
                         </button>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteLesson(lesson.id, lessonData.title);
-                          }}
+                           onClick={(e) => { e.stopPropagation(); handleDeleteLesson(lesson.documentId, lesson.title); }}
                           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all"
                           title="Supprimer"
                         >

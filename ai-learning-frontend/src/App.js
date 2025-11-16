@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import HomePage from './pages/HomePage';
-import CourseDetail from './pages/CourseDetail';
+import LessonDetails  from './pages/CourseDetail';
 
 import RegistrationForm from './pages/inscription';
 import DashboardStudent from './pages/DashboardStudent';
@@ -12,6 +12,9 @@ import LoginForm from './pages/LoginForm';
 import CreateLesson from './pages/CreateLesson';
 import EditLesson from './pages/EditLesson';
 import MyLessons from './pages/MyLessons';
+import LessonDetailsprof from './pages/LessonDetailsprof';
+
+
 
 function App() {
   return (
@@ -22,10 +25,14 @@ function App() {
             
             <Route path="/" element={<HomePage />} />
            
-            <Route path="/course/:courseId" element={<CourseDetail />} />
+            <Route path="/lesson/:id" element={<LessonDetails  />} />
+
            
            <Route path="/register" element={<RegistrationForm />} />
            <Route path="/loginn" element={<LoginForm />} />
+           <Route path="/lesson/:documentId" element={<LessonDetailsprof />} />
+           
+
 
 
           <Route 
