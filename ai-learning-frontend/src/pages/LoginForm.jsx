@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './style/LoginForm.css';
 
 const LoginForm = () => {
@@ -12,6 +12,7 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -27,82 +28,22 @@ const LoginForm = () => {
     setError('');
 
     try {
-      // Recherche dans la collection appropriée (students ou teachers)
-      const apiUrl = userType === 'student' 
-        ? 'http://localhost:1337/api/students'
-        : 'http://localhost:1337/api/teachers';
-
-      console.log('Tentative de connexion pour:', formData.email);
+      const result = await login(formData.email, formData.password, userType);
       
-      // Recherche par email seulement d'abord
-      const response = await axios.get(apiUrl, {
-        params: {
-          'filters[email][$eq]': formData.email
-        }
-      });
-
-      console.log('Réponse API complète:', response);
-      console.log('Data:', response.data);
-      console.log('Data.data:', response.data.data);
-
-      // Vérification si l'utilisateur existe
-      if (!response.data.data || response.data.data.length === 0) {
-        setError('❌ Aucun compte trouvé avec cet email');
-        return;
-      }
-
-      const userData = response.data.data[0];
-      console.log('Données utilisateur complètes:', userData);
-
-      // ✅ CORRECTION : Accès direct aux propriétés sans .attributes
-      // Selon votre structure d'API, les champs peuvent être directement dans userData
-      const userFields = userData.attributes || userData;
+      console.log('✅ Login réussi, résultat:', result);
       
-      console.log('Champs utilisateur:', userFields);
-      console.log('Password stocké:', userFields.password);
-      console.log('Password saisi:', formData.password);
-
-      // Vérification du mot de passe
-      if (!userFields.password || userFields.password !== formData.password) {
-        setError('❌ Mot de passe incorrect');
-        return;
-      }
-
-      // Création du token simulé
-      const token = btoa(JSON.stringify({
-        id: userData.id,
-        type: userType,
-        email: userFields.email,
-        name: `${userFields.first_name} ${userFields.last_name}`
-      }));
-
-      // Sauvegarde dans le localStorage
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userType', userType);
-      localStorage.setItem('userData', JSON.stringify(userFields));
-
-      console.log('Connexion réussie, redirection...');
-
-      // Redirection vers le dashboard approprié
-      if (userType === 'student') {
-        navigate('/dashboard-student');
+      // Redirection immédiate vers le dashboard approprié
+      const finalUserType = result.userType || userType;
+      console.log('🔄 Redirection vers:', finalUserType === 'student' ? '/dashboard-student' : '/dashboard-teacher');
+      
+      // Utiliser window.location.href pour forcer un rechargement complet et éviter les problèmes de contexte
+      if (finalUserType === 'student') {
+        window.location.href = '/dashboard-student';
       } else {
-        navigate('/dashboard-teacher');
+        window.location.href = '/dashboard-teacher';
       }
-
     } catch (error) {
-      console.error('Erreur de connexion détaillée:', error);
-      if (error.response) {
-        console.log('Status:', error.response.status);
-        console.log('Headers:', error.response.headers);
-        console.log('Data:', error.response.data);
-        setError(`❌ Erreur serveur: ${error.response.status}`);
-      } else if (error.request) {
-        setError('❌ Impossible de contacter le serveur. Vérifiez que Strapi est démarré.');
-      } else {
-        setError('❌ Erreur: ' + error.message);
-      }
-    } finally {
+      setError(error.message || 'Erreur de connexion');
       setLoading(false);
     }
   };

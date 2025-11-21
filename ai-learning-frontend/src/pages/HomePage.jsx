@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { API_URL } from "../config/api";
 
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -10,12 +12,12 @@ const HomePage = () => {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
-        const res = await fetch("http://localhost:1337/api/lessons?populate=*");
-        const data = await res.json();
-        setLessons(data.data); 
+        // Récupérer tous les cours publiés depuis Flask
+        const response = await axios.get(`${API_URL}/courses?is_published=true&include_files=true`);
+        setLessons(response.data.data || []); 
         setLoading(false);
       } catch (error) {
-        console.error("Erreur Strapi:", error);
+        console.error("Erreur chargement cours:", error);
         setLoading(false);
       }
     };
@@ -182,24 +184,10 @@ const HomePage = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2 mb-4 pb-4 border-b border-slate-700">
-                        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">
-                            {lesson.teacher?.first_name?.charAt(0)}{lesson.teacher?.last_name?.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">
-                            {lesson.teacher?.first_name} {lesson.teacher?.last_name}
-                          </p>
-                          <p className="text-xs text-gray-400">Enseignant</p>
-                        </div>
-                      </div>
-
-                      {lesson.course_pdf?.length > 0 && (
+                      {lesson.files && lesson.files.length > 0 && (
                         <div className="mb-4">
                           <a 
-                            href={`http://localhost:1337${lesson.course_pdf[0].url}`} 
+                            href={`${API_URL.replace('/api', '')}/uploads/courses/${lesson.files[0].file_name}`} 
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center text-blue-400 hover:text-blue-300 text-sm transition-colors"
@@ -213,7 +201,7 @@ const HomePage = () => {
                       )}
 
                       <button
-                        onClick={() => window.location.href = `/lesson/${lesson.documentId}`}
+                        onClick={() => window.location.href = `/course/${lesson.id}`}
                         className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl font-medium shadow-lg transition-all duration-300 group-hover:shadow-blue-500/50"
                       >
                         Commencer le cours

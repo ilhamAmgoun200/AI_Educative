@@ -1,31 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import { getAuthHeaders } from '../utils/auth';
+import { API_URL } from '../config/api';
 
 const DashboardTeacher = () => {
   const navigate = useNavigate();
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  const { user, teacherId, logout, isAuthenticated } = useAuth();
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showLessons, setShowLessons] = useState(false);
 
-  // Récupérer l'ID du teacher connecté
-  const getTeacherId = () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return null;
-      const decodedToken = JSON.parse(atob(token));
-      return decodedToken.id;
-    } catch (error) {
-      console.error('Erreur décodage token:', error);
-      return null;
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/loginn');
     }
-  };
+  }, [isAuthenticated, navigate]);
 
-  const teacherId = getTeacherId();
-
-  // Charger les lessons du teacher connecté
+  // Charger les courses du teacher connecté
   const fetchLessons = async () => {
     if (!teacherId) {
       setError('Impossible de récupérer votre identifiant');
@@ -37,14 +31,15 @@ const DashboardTeacher = () => {
       setLoading(true);
       setError('');
       const response = await axios.get(
-        `http://localhost:1337/api/lessons?filters[teacher][id][$eq]=${teacherId}&populate[0]=teacher&populate[1]=course_pdf`
+        `${API_URL}/courses?teacher_id=${teacherId}&include_files=true`,
+        { headers: getAuthHeaders() }
       );
       
-      console.log('✅ Lessons chargés:', response.data.data);
+      console.log('✅ Courses chargés:', response.data.data);
       setLessons(response.data.data || []);
       setShowLessons(true);
     } catch (error) {
-      console.error('❌ Erreur chargement lessons:', error);
+      console.error('❌ Erreur chargement courses:', error);
       setError('Erreur lors du chargement des cours');
       setLessons([]);
     } finally {
@@ -53,37 +48,31 @@ const DashboardTeacher = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userType');
-    localStorage.removeItem('userData');
+    logout();
     navigate('/loginn');
   };
 
-  const handleEditLesson = (lessonId) => {
-    navigate(`/edit-lesson/${lessonId}`);
+  const handleEditLesson = (courseId) => {
+    navigate(`/edit-lesson/${courseId}`);
   };
 
-  const handleDeleteLesson = async (lessonId, lessonTitle) => {
-  if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le cours "${lessonTitle}" ?`)) {
-    return;
-  }
+  const handleDeleteLesson = async (courseId, courseTitle) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le cours "${courseTitle}" ?`)) {
+      return;
+    }
 
-  try {
-    const token = localStorage.getItem('authToken');
-    
-    await axios.delete(`http://localhost:1337/api/lessons/${lessonId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    
-    alert('✅ Cours supprimé avec succès');
-    fetchLessons();
-  } catch (error) {
-    console.error('Erreur suppression:', error);
-    alert('❌ Erreur lors de la suppression du cours');
-  }
-};
+    try {
+      await axios.delete(`${API_URL}/courses/${courseId}`, {
+        headers: getAuthHeaders()
+      });
+      
+      alert('✅ Cours supprimé avec succès');
+      fetchLessons();
+    } catch (error) {
+      console.error('Erreur suppression:', error);
+      alert('❌ Erreur lors de la suppression du cours');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -100,9 +89,9 @@ const DashboardTeacher = () => {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-white font-semibold">
-                  {userData.first_name} {userData.last_name}
+                  {user?.first_name} {user?.last_name}
                 </p>
-                <p className="text-slate-400 text-sm">{userData.email}</p>
+                <p className="text-slate-400 text-sm">{user?.email}</p>
               </div>
               <button
                 onClick={handleLogout}
@@ -195,26 +184,26 @@ const DashboardTeacher = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {lessons.map((lesson) => {
-                  const lessonData = lesson?.attributes || {};
+                {lessons.map((course) => {
+                  const courseData = course;
                   
-                  if (!lessonData.title) {
-                    console.warn('Lesson sans titre:', lesson);
+                  if (!courseData.title) {
+                    console.warn('Course sans titre:', course);
                     return null;
                   }
 
                   return (
                     <div
-                      key={lesson.id}
+                      key={courseData.id}
                       className="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-all border border-slate-200"
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <h3 className="text-xl font-bold text-slate-900">
-                              {lessonData.title}
+                              {courseData.title}
                             </h3>
-                            {lessonData.is_published ? (
+                            {courseData.is_published ? (
                               <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
                                 ✓ Publié
                               </span>
@@ -226,19 +215,19 @@ const DashboardTeacher = () => {
                           </div>
 
                           <p className="text-slate-600 mb-3">
-                            {lessonData.description || 'Pas de description'}
+                            {courseData.description || 'Pas de description'}
                           </p>
 
                           <div className="flex flex-wrap gap-4 text-sm text-slate-500">
-                            {lessonData.order_no && (
-                              <span>📊 Ordre: {lessonData.order_no}</span>
+                            {courseData.order_no && (
+                              <span>📊 Ordre: {courseData.order_no}</span>
                             )}
-                            {lessonData.video_url && (
+                            {courseData.video_url && (
                               <span>🎥 Vidéo disponible</span>
                             )}
-                            {lessonData.course_pdf?.data && (
+                            {courseData.files && courseData.files.length > 0 && (
                               <a
-                                href={`http://localhost:1337${lessonData.course_pdf.data.attributes.url}`}
+                                href={`${API_URL.replace('/api', '')}/uploads/courses/${courseData.files[0].file_name}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-700 font-semibold"
@@ -249,20 +238,20 @@ const DashboardTeacher = () => {
                           </div>
 
                           <p className="text-xs text-slate-400 mt-2">
-                            Créé le {new Date(lessonData.createdAt).toLocaleDateString('fr-FR')}
+                            Créé le {new Date(courseData.created_at).toLocaleDateString('fr-FR')}
                           </p>
                         </div>
 
                         <div className="flex space-x-2 ml-4">
                           <button
-                            onClick={() => handleEditLesson(lesson.id)}
+                            onClick={() => handleEditLesson(courseData.id)}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
                             title="Modifier"
                           >
                             ✏️
                           </button>
                           <button
-                            onClick={() => handleDeleteLesson(lesson.id, lessonData.title)}
+                            onClick={() => handleDeleteLesson(courseData.id, courseData.title)}
                             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all"
                             title="Supprimer"
                           >
@@ -283,13 +272,13 @@ const DashboardTeacher = () => {
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Mes Informations</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-slate-600"><strong>Matière:</strong> {userData.subject || 'Non renseigné'}</p>
-              <p className="text-slate-600"><strong>Établissement:</strong> {userData.establishment || 'Non renseigné'}</p>
+              <p className="text-slate-600"><strong>Matière:</strong> {user?.subject_id || 'Non renseigné'}</p>
+              <p className="text-slate-600"><strong>Établissement:</strong> {user?.establishment || 'Non renseigné'}</p>
             </div>
             <div>
-              <p className="text-slate-600"><strong>Expérience:</strong> {userData.experience_years || '0'} ans</p>
-              <p className="text-slate-600"><strong>CIN:</strong> {userData.cin || 'Non renseigné'}</p>
-              <p className="text-slate-600"><strong>Téléphone:</strong> {userData.phone || 'Non renseigné'}</p>
+              <p className="text-slate-600"><strong>Expérience:</strong> {user?.experience_years || '0'} ans</p>
+              <p className="text-slate-600"><strong>CIN:</strong> {user?.cin || 'Non renseigné'}</p>
+              <p className="text-slate-600"><strong>Téléphone:</strong> {user?.phone || 'Non renseigné'}</p>
             </div>
           </div>
         </div>

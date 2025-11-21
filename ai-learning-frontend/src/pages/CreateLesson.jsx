@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { getAuthHeaders } from '../utils/auth';
+import { API_URL } from '../config/api';
 import './style/CreateLesson.css';
 
 const CreateLesson = () => {
@@ -17,21 +20,7 @@ const CreateLesson = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Récupérer l'ID du teacher connecté
-  const getTeacherId = () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return null;
-      const decodedToken = JSON.parse(atob(token));
-      return decodedToken.id;
-    } catch (error) {
-      console.error('Erreur décodage token:', error);
-      return null;
-    }
-  };
-
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-  const teacherId = getTeacherId();
+  const { teacherId, user } = useAuth();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -49,69 +38,65 @@ const CreateLesson = () => {
     }));
   };
 
-  // ✅ MÉTHODE SIMPLIFIÉE ET CORRECTE
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (!teacherId) {
-    setError('❌ Erreur: Impossible de récupérer votre identifiant. Veuillez vous reconnecter.');
-    return;
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!teacherId) {
+      setError('❌ Erreur: Impossible de récupérer votre identifiant. Veuillez vous reconnecter.');
+      return;
+    }
 
-  setLoading(true);
-  setError('');
-  setSuccess('');
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
-  try {
-    // ✅ ÉTAPE 1: Créer le lesson d'abord SANS le PDF
-    const lessonData = {
-      data: {  // ← IMPORTANT: wrapper dans "data"
+    try {
+      // ÉTAPE 1: Créer le course d'abord SANS le PDF
+      const courseData = {
         title: formData.title,
         description: formData.description,
         video_url: formData.video_url,
         order_no: formData.order_no ? parseInt(formData.order_no) : null,
         is_published: formData.is_published,
-        teacher: teacherId
-      }
-    };
+      };
 
-    console.log('📤 Étape 1: Création du lesson:', lessonData);
+      console.log('📤 Étape 1: Création du course:', courseData);
 
-    const lessonResponse = await axios.post(
-      'http://localhost:1337/api/lessons',
-      lessonData,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      }
-    );
-
-    console.log('✅ Lesson créé:', lessonResponse.data);
-    const createdLessonId = lessonResponse.data.data.id;
-
-    // ✅ ÉTAPE 2: Upload du PDF si présent
-    if (formData.course_pdf) {
-      console.log('📎 Étape 2: Upload du PDF...');
-      
-      const formDataToSend = new FormData();
-      formDataToSend.append('files', formData.course_pdf);
-      formDataToSend.append('ref', 'api::lesson.lesson'); // Type de la collection
-      formDataToSend.append('refId', createdLessonId);    // ID du lesson créé
-      formDataToSend.append('field', 'course_pdf');       // Nom du champ
-
-      const uploadResponse = await axios.post(
-        'http://localhost:1337/api/upload',
-        formDataToSend,
+      const courseResponse = await axios.post(
+        `${API_URL}/courses`,
+        courseData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
           }
         }
       );
 
-      console.log('✅ PDF uploadé:', uploadResponse.data);
-    }
+      console.log('✅ Course créé:', courseResponse.data);
+      // Flask retourne { message: '...', data: {...} }
+      const createdCourseId = courseResponse.data.data?.id || courseResponse.data.id;
+
+      // ÉTAPE 2: Upload du PDF si présent
+      if (formData.course_pdf) {
+        console.log('📎 Étape 2: Upload du PDF...');
+        
+        const formDataToSend = new FormData();
+        formDataToSend.append('file', formData.course_pdf);
+
+        await axios.post(
+          `${API_URL}/courses/${createdCourseId}/files`,
+          formDataToSend,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              ...getAuthHeaders(),
+            }
+          }
+        );
+
+        console.log('✅ PDF uploadé');
+      }
 
     setSuccess('✅ Cours créé avec succès!');
     
@@ -126,17 +111,10 @@ const handleSubmit = async (e) => {
       console.log('📋 Status:', error.response.status);
       console.log('📋 Data:', error.response.data);
       
-      const errorDetails = error.response.data?.error?.details?.errors || [];
-      const errorMessage = error.response.data?.error?.message || 'Erreur inconnue';
-      
-      if (errorDetails.length > 0) {
-        const detailsText = errorDetails.map(e => `${e.path}: ${e.message}`).join(', ');
-        setError(`❌ Erreur de validation: ${detailsText}`);
-      } else {
-        setError(`❌ Erreur ${error.response.status}: ${errorMessage}`);
-      }
+      const errorMessage = error.response.data?.error || error.response.data?.message || 'Erreur inconnue';
+      setError(`❌ Erreur ${error.response.status}: ${errorMessage}`);
     } else if (error.request) {
-      setError('❌ Impossible de contacter le serveur Strapi. Vérifiez qu\'il est démarré.');
+      setError('❌ Impossible de contacter le serveur Flask. Vérifiez qu\'il est démarré sur http://localhost:5000');
     } else {
       setError('❌ Erreur: ' + error.message);
     }
@@ -144,86 +122,6 @@ const handleSubmit = async (e) => {
     setLoading(false);
   }
 };
-
-  // ✅ MÉTHODE ALTERNATIVE si la première échoue
-  const tryAlternativeMethod = async () => {
-    try {
-      console.log('🔄 Essai méthode alternative...');
-      
-      // Essayer avec une structure de relation différente
-      const lessonData = {
-        data: {
-          title: formData.title,
-          description: formData.description,
-          video_url: formData.video_url,
-          order_no: formData.order_no ? parseInt(formData.order_no) : null,
-          is_published: formData.is_published,
-          teacher: {
-            id: teacherId,
-            __type: "users"
-          }
-        }
-      };
-
-      console.log('📤 Données alternative:', lessonData);
-
-      let response;
-      
-      if (formData.course_pdf) {
-        const formDataToSend = new FormData();
-        formDataToSend.append('data', JSON.stringify(lessonData.data));
-        formDataToSend.append('files.course_pdf', formData.course_pdf);
-        
-        response = await axios.post('http://localhost:1337/api/lessons', formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-      } else {
-        response = await axios.post('http://localhost:1337/api/lessons', lessonData);
-      }
-
-      console.log('✅ Succès méthode alternative:', response.data);
-      setSuccess('✅ Cours créé avec succès!');
-      setTimeout(() => navigate('/dashboard-teacher'), 2000);
-
-    } catch (error) {
-      console.error('❌ Échec méthode alternative:', error);
-      setError('❌ Impossible de créer le cours. Vérifiez la configuration des relations dans Strapi.');
-    }
-  };
-
-  // ✅ MÉTHODE SANS FICHIER (pour debug)
-  const createWithoutFile = async () => {
-    try {
-      console.log('🔄 Création sans fichier...');
-      
-      const lessonData = {
-        data: {
-          title: formData.title,
-          description: formData.description,
-          video_url: formData.video_url,
-          order_no: formData.order_no ? parseInt(formData.order_no) : null,
-          is_published: formData.is_published,
-          teacher: teacherId
-        }
-      };
-
-      console.log('📤 Données sans fichier:', lessonData);
-
-      const response = await axios.post('http://localhost:1337/api/lessons', lessonData);
-      console.log('✅ Succès sans fichier:', response.data);
-      
-      setSuccess('✅ Cours créé sans fichier!');
-      setTimeout(() => navigate('/dashboard-teacher'), 2000);
-
-    } catch (error) {
-      console.error('❌ Échec sans fichier:', error);
-      if (error.response) {
-        setError(`❌ Erreur relation: ${JSON.stringify(error.response.data)}`);
-      }
-    }
-  };
 
   const handleCancel = () => {
     navigate('/dashboard-teacher');
@@ -262,7 +160,7 @@ const handleSubmit = async (e) => {
               <div>
                 <h1 className="text-3xl font-bold text-white">Créer un Nouveau Cours</h1>
                 <p className="text-slate-400 mt-2">
-                  Enseignant: {userData.first_name} {userData.last_name} | 
+                  Enseignant: {user?.first_name} {user?.last_name} | 
                   ID: {teacherId}
                 </p>
               </div>
@@ -388,20 +286,6 @@ const handleSubmit = async (e) => {
             {error && (
               <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl">
                 {error}
-                <div className="mt-2 flex space-x-2">
-                  <button 
-                    onClick={tryAlternativeMethod}
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Essayer autre méthode
-                  </button>
-                  <button 
-                    onClick={createWithoutFile}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Créer sans fichier
-                  </button>
-                </div>
               </div>
             )}
 

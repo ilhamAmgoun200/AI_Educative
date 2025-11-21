@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config/api';
 import './style/RegistrationFoem.css';
 
 const RegistrationForm = () => {
@@ -45,37 +46,30 @@ const RegistrationForm = () => {
     setMessage('');
 
     try {
-      const apiUrl = userType === 'student' 
-        ? 'http://localhost:1337/api/students'
-        : 'http://localhost:1337/api/teachers';
+      const endpoint = userType === 'student'
+        ? `${API_URL}/students`
+        : `${API_URL}/teachers`;
 
-      // ✅ Structure correcte pour Strapi v4
       const submissionData = {
-        data: {
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          cin: formData.cin,
-          establishment: formData.establishment,
-          is_active: true,
-          // Champs conditionnels selon le type
-          ...(userType === 'student' && {
-            birth_date: formData.birth_date,
-            branch: formData.branch,
-            cne: formData.cne
-          }),
-          ...(userType === 'teacher' && {
-            subject: formData.subject,
-            experience_years: parseInt(formData.experience_years) || 0
-          })
-        }
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        cin: formData.cin,
+        establishment: formData.establishment,
       };
 
-      console.log('Données envoyées:', submissionData);
+      if (userType === 'student') {
+        submissionData.birth_date = formData.birth_date;
+        submissionData.branch = formData.branch;
+        submissionData.cne = formData.cne;
+      } else {
+        submissionData.subject = formData.subject;
+        submissionData.experience_years = parseInt(formData.experience_years) || 0;
+      }
 
-      const response = await axios.post(apiUrl, submissionData);
+      const response = await axios.post(endpoint, submissionData);
       
       setMessage(`✅ ${userType === 'student' ? 'Étudiant' : 'Enseignant'} créé avec succès!`);
       resetForm();
@@ -86,7 +80,7 @@ const RegistrationForm = () => {
       if (error.response) {
         setMessage(`❌ Erreur ${error.response.status}: ${JSON.stringify(error.response.data.error || error.response.data)}`);
       } else if (error.request) {
-        setMessage('❌ Pas de réponse du serveur. Vérifiez que Strapi est démarré.');
+        setMessage('❌ Pas de réponse du serveur. Vérifiez que Flask est démarré sur http://localhost:5000');
       } else {
         setMessage('❌ Erreur: ' + error.message);
       }

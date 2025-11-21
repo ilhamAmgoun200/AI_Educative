@@ -1,28 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '../config/api';
 
 const LessonDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [lesson, setLesson] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchLesson = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:1337/api/lessons/${id}?populate=*`
+        setLoading(true);
+        const response = await axios.get(
+          `${API_URL}/courses/${id}?include_files=true`
         );
-        const data = await response.json();
-        setLesson(data.data);
+        setLesson(response.data.data);
+        setError('');
       } catch (error) {
         console.error("Erreur lors du chargement du cours :", error);
+        setError('Impossible de charger le cours');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchLesson();
   }, [id]);
 
-  if (!lesson) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -33,7 +41,21 @@ const LessonDetails = () => {
     );
   }
 
-  const BASE_URL = "http://localhost:1337";
+  if (error || !lesson) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-lg mb-4">{error || 'Cours introuvable'}</p>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -76,37 +98,20 @@ const LessonDetails = () => {
           {/* Colonne principale */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Section Enseignant */}
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-shadow duration-300">
-              <div className="flex items-start gap-6">
-                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-2xl shadow-lg">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white mb-3 flex items-center gap-2">
-                    Votre Enseignant
-                  </h2>
-                  <div className="space-y-2">
-                    <p className="text-2xl font-semibold text-blue-400">
-                      {lesson.teacher.first_name} {lesson.teacher.last_name}
-                    </p>
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <a 
-                        href={`mailto:${lesson.teacher.email}`}
-                        className="hover:text-blue-400 transition-colors"
-                      >
-                        {lesson.teacher.email}
-                      </a>
-                    </div>
-                  </div>
-                </div>
+            {/* Section Vidéo */}
+            {lesson.video_url && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-xl">
+                <h2 className="text-2xl font-bold text-white mb-4">Vidéo du cours</h2>
+                <a
+                  href={lesson.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  {lesson.video_url}
+                </a>
               </div>
-            </div>
+            )}
 
             {/* Section PDF */}
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-xl">
@@ -119,15 +124,15 @@ const LessonDetails = () => {
                 <h2 className="text-2xl font-bold text-white">Supports de Cours</h2>
               </div>
 
-              {lesson.course_pdf?.length > 0 ? (
+              {lesson.files && lesson.files.length > 0 ? (
                 <div className="space-y-3">
-                  {lesson.course_pdf.map((pdf, index) => (
+                  {lesson.files.map((pdf, index) => (
                     <a
                       key={pdf.id}
-                      href={`${BASE_URL}${pdf.url}`}
+                      href={`${API_URL.replace('/api', '')}/uploads/courses/${pdf.file_name}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      download={pdf.name}              // force le téléchargement
+                      download={pdf.file_name}
                       className="group flex items-center justify-between p-5 bg-slate-900/50 hover:bg-slate-900/80 border border-slate-700/30 hover:border-blue-500/50 rounded-xl transition-all duration-300"
                     >
                       <div className="flex items-center gap-4 flex-1">
@@ -138,7 +143,7 @@ const LessonDetails = () => {
                         </div>
                         <div>
                           <p className="text-white font-medium group-hover:text-blue-400 transition-colors">
-                            {pdf.name}
+                            {pdf.file_name}
                           </p>
                           <p className="text-gray-500 text-sm">
                             Document {index + 1}
@@ -184,7 +189,7 @@ const LessonDetails = () => {
                   <div>
                     <p className="text-gray-400 text-xs">Date de création</p>
                     <p className="text-white text-sm font-medium">
-                      {new Date(lesson.createdAt).toLocaleDateString('fr-FR')}
+                      {lesson.created_at ? new Date(lesson.created_at).toLocaleDateString('fr-FR') : 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -198,7 +203,7 @@ const LessonDetails = () => {
                   <div>
                     <p className="text-gray-400 text-xs">Dernière mise à jour</p>
                     <p className="text-white text-sm font-medium">
-                      {new Date(lesson.updatedAt).toLocaleDateString('fr-FR')}
+                      {lesson.updated_at ? new Date(lesson.updated_at).toLocaleDateString('fr-FR') : 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -211,7 +216,7 @@ const LessonDetails = () => {
                     <p className="text-gray-400 text-sm">Ressources disponibles</p>
                   </div>
                   <p className="text-2xl font-bold text-white">
-                    {lesson.course_pdf?.length || 0}
+                    {lesson.files?.length || 0}
                   </p>
                 </div>
               </div>

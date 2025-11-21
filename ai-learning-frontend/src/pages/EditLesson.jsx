@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { getAuthHeaders } from '../utils/auth';
+import { API_URL } from '../config/api';
 
 const EditLesson = () => {
   const navigate = useNavigate();
@@ -19,9 +22,9 @@ const EditLesson = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  const { user } = useAuth();
 
-  // Charger les données du lesson
+  // Charger les données du course
   useEffect(() => {
     fetchLesson();
   }, [lessonId]);
@@ -30,26 +33,26 @@ const EditLesson = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:1337/api/lessons/${lessonId}?populate=course_pdf`
+        `${API_URL}/courses/${lessonId}?include_files=true`,
+        { headers: getAuthHeaders() }
       );
 
-      const lesson = response.data.data;
-const lessonData = lesson.attributes; // ✅ Accès aux attributs
+      const courseData = response.data.data;
       
-console.log('Lesson chargé:', lessonData);
+      console.log('Course chargé:', courseData);
 
-setFormData({
-  title: lessonData.title || '',
-  description: lessonData.description || '',
-  video_url: lessonData.video_url || '',
-  order_no: lessonData.order_no || '',
-  is_published: lessonData.is_published || false,
-  course_pdf: null
-});
+      setFormData({
+        title: courseData.title || '',
+        description: courseData.description || '',
+        video_url: courseData.video_url || '',
+        order_no: courseData.order_no || '',
+        is_published: courseData.is_published || false,
+        course_pdf: null
+      });
 
-if (lessonData.course_pdf?.data) {
-  setExistingPdf(lessonData.course_pdf.data);
-}
+      if (courseData.files && courseData.files.length > 0) {
+        setExistingPdf(courseData.files[0]);
+      }
 
       setError('');
     } catch (error) {
@@ -83,25 +86,24 @@ if (lessonData.course_pdf?.data) {
     setSuccess('');
 
     try {
-      // Étape 1: Mettre à jour les données du lesson
-      const lessonData = {
-        data: {
-          title: formData.title,
-          description: formData.description,
-          video_url: formData.video_url,
-          order_no: formData.order_no ? parseInt(formData.order_no) : null,
-          is_published: formData.is_published
-        }
+      // Étape 1: Mettre à jour les données du course
+      const courseData = {
+        title: formData.title,
+        description: formData.description,
+        video_url: formData.video_url,
+        order_no: formData.order_no ? parseInt(formData.order_no) : null,
+        is_published: formData.is_published
       };
 
-      console.log('📤 Mise à jour du lesson:', lessonData);
+      console.log('📤 Mise à jour du course:', courseData);
 
       await axios.put(
-        `http://localhost:1337/api/lessons/${lessonId}`,
-        lessonData,
+        `${API_URL}/courses/${lessonId}`,
+        courseData,
         {
           headers: {
             'Content-Type': 'application/json',
+            ...getAuthHeaders(),
           }
         }
       );
@@ -111,17 +113,15 @@ if (lessonData.course_pdf?.data) {
         console.log('📎 Upload du nouveau PDF...');
         
         const formDataToSend = new FormData();
-        formDataToSend.append('files', formData.course_pdf);
-        formDataToSend.append('ref', 'api::lesson.lesson');
-        formDataToSend.append('refId', lessonId);
-        formDataToSend.append('field', 'course_pdf');
+        formDataToSend.append('file', formData.course_pdf);
 
         await axios.post(
-          'http://localhost:1337/api/upload',
+          `${API_URL}/courses/${lessonId}/files`,
           formDataToSend,
           {
             headers: {
               'Content-Type': 'multipart/form-data',
+              ...getAuthHeaders(),
             }
           }
         );
@@ -182,7 +182,7 @@ if (lessonData.course_pdf?.data) {
               <div>
                 <h1 className="text-3xl font-bold text-white">Modifier le Cours</h1>
                 <p className="text-slate-400 mt-2">
-                  Enseignant: {userData.first_name} {userData.last_name}
+                  Enseignant: {user?.first_name} {user?.last_name}
                 </p>
               </div>
             </div>
@@ -261,12 +261,12 @@ if (lessonData.course_pdf?.data) {
               <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
                 <p className="text-blue-800 font-semibold mb-2">📄 PDF actuel :</p>
                 <a
-                  href={`http://localhost:1337${existingPdf.attributes.url}`}
+                  href={`${API_URL.replace('/api', '')}/uploads/courses/${existingPdf.file_name}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-700 underline"
                 >
-                  {existingPdf.attributes.name}
+                  {existingPdf.file_name}
                 </a>
               </div>
             )}

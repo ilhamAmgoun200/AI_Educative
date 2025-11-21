@@ -1,9 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 
 import HomePage from './pages/HomePage';
-import LessonDetails  from './pages/CourseDetail';
-
+import CourseDetail from './pages/CourseDetail';
+import ViewLesson from './pages/ViewLesson';
 import RegistrationForm from './pages/inscription';
 import DashboardStudent from './pages/DashboardStudent';
 import DashboardTeacher from './pages/DashboardTeacher';
@@ -19,18 +20,17 @@ import LessonDetailsprof from './pages/LessonDetailsprof';
 function App() {
   return (
     <Router>
+      <AuthProvider>
         <div className="App">
           <Routes>
 
             
             <Route path="/" element={<HomePage />} />
-           
-            <Route path="/lesson/:id" element={<LessonDetails  />} />
-
-           
-           <Route path="/register" element={<RegistrationForm />} />
-           <Route path="/loginn" element={<LoginForm />} />
-           <Route path="/lesson/:documentId" element={<LessonDetailsprof />} />
+            <Route path="/course/:id" element={<CourseDetail />} />
+            <Route path="/view-lesson/:lessonId" element={<ViewLesson />} />
+            <Route path="/register" element={<RegistrationForm />} />
+            <Route path="/loginn" element={<LoginForm />} />
+            <Route path="/lesson/:documentId" element={<LessonDetailsprof />} />
            
 
 
@@ -68,7 +68,7 @@ function App() {
            
           </Routes>
         </div>
-      
+      </AuthProvider>
     </Router>
   );
 }
