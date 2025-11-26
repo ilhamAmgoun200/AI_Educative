@@ -1,0 +1,25 @@
+/* Styles pour la page de création de cours */
+.resize-vertical {
+  resize: vertical;
+}
+
+/* Animation pour le bouton */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Style pour la zone de dépôt de fichier */
+.border-dashed:hover {
+  border-color: #3b82f6;
+  background-color: #f8fafc;
+}
+
+/* Transition pour tous les éléments */
+.transition-all {
+  transition: all 0.3s ease-in-out;
+}

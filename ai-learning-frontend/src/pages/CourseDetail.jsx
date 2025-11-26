@@ -1,332 +1,227 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '../config/api';
 
-const CourseDetail = () => {
+const LessonDetails = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { courseId } = useParams(); // Pour récupérer l'ID dynamique plus tard
-  const [activeTab, setActiveTab] = useState('description');
+  const [lesson, setLesson] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Données statiques du cours (sera remplacé par des données dynamiques)
-  const courseData = {
-    id: 1,
-    title: 'Introduction à Python',
-    instructor: {
-      name: 'Dr. Sarah Chen',
-      avatar: '👩‍🏫',
-      bio: 'Docteure en Informatique avec 10 ans d\'expérience en enseignement',
-      rating: 4.9,
-      students: 2500
-    },
-    category: 'Programmation',
-    level: 'Débutant',
-    duration: '15 heures',
-    students: 1250,
-    rating: 4.8,
-    reviews: 340,
-    progress: 0, // 0 si pas commencé, sinon pourcentage
-    description: `Ce cours vous initiera aux fondamentaux de la programmation Python. Vous apprendrez les concepts de base, la syntaxe, et comment construire vos premiers programmes.`,
-    objectives: [
-      'Comprendre les bases de la programmation Python',
-      'Maîtriser les structures de contrôle',
-      'Manipuler les structures de données',
-      'Créer des fonctions réutilisables',
-      'Gérer les erreurs et exceptions'
-    ],
-    chapters: [
-      {
-        id: 1,
-        title: 'Introduction à Python',
-        duration: '45 min',
-        lessons: [
-          { id: 1, title: 'Qu\'est-ce que Python ?', duration: '15 min', type: 'video', completed: false },
-          { id: 2, title: 'Installation et configuration', duration: '20 min', type: 'video', completed: false },
-          { id: 3, title: 'Premier programme', duration: '10 min', type: 'practice', completed: false }
-        ]
-      },
-      {
-        id: 2,
-        title: 'Variables et Types de Données',
-        duration: '1h 30min',
-        lessons: [
-          { id: 4, title: 'Variables et assignation', duration: '20 min', type: 'video', completed: false },
-          { id: 5, title: 'Types de données de base', duration: '25 min', type: 'video', completed: false },
-          { id: 6, title: 'Exercices pratiques', duration: '45 min', type: 'practice', completed: false }
-        ]
-      },
-      {
-        id: 3,
-        title: 'Structures de Contrôle',
-        duration: '2h 15min',
-        lessons: [
-          { id: 7, title: 'Conditions if/else', duration: '30 min', type: 'video', completed: false },
-          { id: 8, title: 'Boucles for et while', duration: '35 min', type: 'video', completed: false },
-          { id: 9, title: 'Exercices avancés', duration: '70 min', type: 'practice', completed: false }
-        ]
+  useEffect(() => {
+    const fetchLesson = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `${API_URL}/courses/${id}?include_files=true`
+        );
+        setLesson(response.data.data);
+        setError('');
+      } catch (error) {
+        console.error("Erreur lors du chargement du cours :", error);
+        setError('Impossible de charger le cours');
+      } finally {
+        setLoading(false);
       }
-    ],
-    resources: [
-      { type: 'pdf', title: 'Guide de référence Python', size: '2.4 MB' },
-      { type: 'code', title: 'Exercices supplémentaires', size: '1.1 MB' },
-      { type: 'cheatsheet', title: 'Aide-mémoire syntaxe', size: '0.8 MB' }
-    ]
-  };
+    };
 
-  const handleStartCourse = () => {
-    // Logique pour commencer le cours
-    console.log('Début du cours:', courseData.title);
-    // Naviguer vers la page de lecture
-    navigate(`/course/${courseData.id}/chapter/1`);
-  };
+    fetchLesson();
+  }, [id]);
 
-  const handleAskAI = () => {
-    // Logique pour l'assistant IA
-    console.log('Assistant IA demandé pour:', courseData.title);
-    // Naviguer vers l'interface IA
-    navigate(`/course/${courseData.id}/ai-assistant`);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-gray-300 text-lg">Chargement du cours...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !lesson) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-lg mb-4">{error || 'Cours introuvable'}</p>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+          >
+            Retour à l'accueil
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      {/* Header */}
-      <header className="bg-slate-800 border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => navigate(-1)}
-                className="text-gray-300 hover:text-white"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AI</span>
-              </div>
-              <h1 className="text-white font-semibold">LearnAI</h1>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
 
-            <div className="flex items-center space-x-4">
-              <button className="text-gray-300 hover:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </button>
-              <button className="text-gray-300 hover:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              </button>
+       {/* Bouton Retour */}
+    <div className="max-w-6xl mx-auto px-8 py-6">
+      <button
+        onClick={() => navigate(-1)} // Retour à la page précédente
+        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+      >
+        ← Retour
+      </button>
+    </div> 
+      {/* Header avec dégradé */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-16">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
             </div>
+            <span className="text-blue-100 text-sm font-medium uppercase tracking-wide">
+              Cours en ligne
+            </span>
           </div>
+          <h1 className="text-5xl font-bold text-white mb-4 leading-tight">
+            {lesson.title}
+          </h1>
+          <p className="text-blue-50 text-xl max-w-3xl leading-relaxed">
+            {lesson.description}
+          </p>
         </div>
-      </header>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Contenu principal */}
+      <div className="max-w-6xl mx-auto px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Colonne de gauche - Contenu principal */}
-          <div className="lg:col-span-2">
-            {/* En-tête du cours */}
-            <div className="bg-gray-100 rounded-xl p-6 mb-6">
-              <div className="flex flex-col md:flex-row md:items-start justify-between mb-4">
-                <div>
-                  <span className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full mb-3">
-                    {courseData.category}
-                  </span>
-                  <h1 className="text-3xl font-bold text-slate-900 mb-2">{courseData.title}</h1>
-                  <p className="text-slate-600 mb-4">{courseData.description}</p>
+          
+          {/* Colonne principale */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* Section Vidéo */}
+            {lesson.video_url && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-xl">
+                <h2 className="text-2xl font-bold text-white mb-4">Vidéo du cours</h2>
+                <a
+                  href={lesson.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  {lesson.video_url}
+                </a>
+              </div>
+            )}
+
+            {/* Section PDF */}
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8 shadow-xl">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-xl shadow-lg">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                 </div>
-                <div className="flex items-center space-x-2 text-slate-600">
-                  <span>⭐ {courseData.rating}</span>
-                  <span>•</span>
-                  <span>👤 {courseData.students} étudiants</span>
-                </div>
+                <h2 className="text-2xl font-bold text-white">Supports de Cours</h2>
               </div>
 
-              <div className="flex flex-wrap gap-4 text-sm text-slate-600">
-                <div className="flex items-center space-x-1">
-                  <span>📊</span>
-                  <span>Niveau: {courseData.level}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span>⏱️</span>
-                  <span>Durée: {courseData.duration}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span>📝</span>
-                  <span>{courseData.reviews} avis</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation des onglets */}
-            <div className="bg-gray-100 rounded-xl p-6 mb-6">
-              <div className="flex space-x-4 border-b border-gray-300 pb-4 mb-6">
-                {['description', 'contenu', 'ressources'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`capitalize px-4 py-2 rounded-lg transition-colors ${
-                      activeTab === tab
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {tab === 'description' && 'Description'}
-                    {tab === 'contenu' && 'Contenu du cours'}
-                    {tab === 'ressources' && 'Ressources'}
-                  </button>
-                ))}
-              </div>
-
-              {/* Contenu des onglets */}
-              {activeTab === 'description' && (
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-900 mb-4">Objectifs d'apprentissage</h3>
-                  <ul className="space-y-2 mb-6">
-                    {courseData.objectives.map((objective, index) => (
-                      <li key={index} className="flex items-center space-x-3 text-slate-700">
-                        <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                        <span>{objective}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {activeTab === 'contenu' && (
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-900 mb-4">Plan du cours</h3>
-                  <div className="space-y-4">
-                    {courseData.chapters.map((chapter) => (
-                      <div key={chapter.id} className="border border-gray-300 rounded-lg">
-                        <div className="bg-white p-4 rounded-lg">
-                          <div className="flex justify-between items-center">
-                            <h4 className="font-semibold text-slate-900">{chapter.title}</h4>
-                            <span className="text-sm text-slate-600">{chapter.duration}</span>
-                          </div>
-                          <div className="mt-3 space-y-2">
-                            {chapter.lessons.map((lesson) => (
-                              <div key={lesson.id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                                <div className="flex items-center space-x-3">
-                                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                                    lesson.type === 'video' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'
-                                  }`}>
-                                    {lesson.type === 'video' ? '▶' : '💻'}
-                                  </span>
-                                  <span className="text-slate-700">{lesson.title}</span>
-                                </div>
-                                <span className="text-sm text-slate-500">{lesson.duration}</span>
-                              </div>
-                            ))}
-                          </div>
+              {lesson.files && lesson.files.length > 0 ? (
+                <div className="space-y-3">
+                  {lesson.files.map((pdf, index) => (
+                    <a
+                      key={pdf.id}
+                      href={`${API_URL.replace('/api', '')}/uploads/courses/${pdf.file_name}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={pdf.file_name}
+                      className="group flex items-center justify-between p-5 bg-slate-900/50 hover:bg-slate-900/80 border border-slate-700/30 hover:border-blue-500/50 rounded-xl transition-all duration-300"
+                    >
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="bg-red-500/10 p-3 rounded-lg group-hover:bg-red-500/20 transition-colors">
+                          <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-white font-medium group-hover:text-blue-400 transition-colors">
+                            {pdf.file_name}
+                          </p>
+                          <p className="text-gray-500 text-sm">
+                            Document {index + 1}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'ressources' && (
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-900 mb-4">Ressources téléchargeables</h3>
-                  <div className="space-y-3">
-                    {courseData.resources.map((resource, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-300 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <span className="text-blue-600">
-                            {resource.type === 'pdf' && '📄'}
-                            {resource.type === 'code' && '💻'}
-                            {resource.type === 'cheatsheet' && '📝'}
-                          </span>
-                          <div>
-                            <div className="font-medium text-slate-900">{resource.title}</div>
-                            <div className="text-sm text-slate-600">{resource.size}</div>
-                          </div>
-                        </div>
-                        <button className="text-blue-600 hover:text-blue-700 font-medium">
-                          Télécharger
-                        </button>
+                      <div className="flex items-center gap-2 text-gray-400 group-hover:text-blue-400 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span className="text-sm font-medium">Télécharger</span>
                       </div>
-                    ))}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="bg-slate-900/50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                   </div>
+                  <p className="text-gray-400">Aucun fichier PDF disponible pour le moment</p>
                 </div>
               )}
             </div>
+
           </div>
 
-          {/* Colonne de droite - Informations complémentaires */}
+          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Carte du professeur */}
-            <div className="bg-gray-100 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Enseignant</h3>
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-2xl">
-                  {courseData.instructor.avatar}
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-900">{courseData.instructor.name}</h4>
-                  <div className="flex items-center space-x-1 text-sm text-slate-600">
-                    <span>⭐ {courseData.instructor.rating}</span>
-                    <span>•</span>
-                    <span>👤 {courseData.instructor.students}</span>
+            
+            {/* Card Informations */}
+            <div className="bg-gradient-to-br from-slate-800/80 to-slate-800/40 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-xl sticky top-8">
+              <h3 className="text-lg font-bold text-white mb-6">Informations</h3>
+              <div className="space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-500/10 p-2 rounded-lg">
+                    <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-xs">Date de création</p>
+                    <p className="text-white text-sm font-medium">
+                      {lesson.created_at ? new Date(lesson.created_at).toLocaleDateString('fr-FR') : 'N/A'}
+                    </p>
                   </div>
                 </div>
-              </div>
-              <p className="text-sm text-slate-600">{courseData.instructor.bio}</p>
-            </div>
-
-            {/* Actions */}
-            <div className="bg-gray-100 rounded-xl p-6">
-              <div className="space-y-4">
-                <button
-                  onClick={handleStartCourse}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors duration-200"
-                >
-                  {courseData.progress > 0 ? 'Continuer le cours' : 'Commencer le cours'}
-                </button>
                 
-                <button
-                  onClick={handleAskAI}
-                  className="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 py-3 px-4 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center space-x-2"
-                >
-                  <span>🤖</span>
-                  <span>Assistant IA</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  <div className="bg-purple-500/10 p-2 rounded-lg">
+                    <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-xs">Dernière mise à jour</p>
+                    <p className="text-white text-sm font-medium">
+                      {lesson.updated_at ? new Date(lesson.updated_at).toLocaleDateString('fr-FR') : 'N/A'}
+                    </p>
+                  </div>
+                </div>
 
-                <div className="flex space-x-2">
-                  <button className="flex-1 border border-gray-400 text-slate-700 hover:bg-gray-200 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
-                    ⭐ Noter
-                  </button>
-                  <button className="flex-1 border border-gray-400 text-slate-700 hover:bg-gray-200 py-2 px-4 rounded-lg font-medium transition-colors duration-200">
-                    📤 Partager
-                  </button>
+                <div className="pt-4 border-t border-slate-700/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-gray-400 text-sm">Ressources disponibles</p>
+                  </div>
+                  <p className="text-2xl font-bold text-white">
+                    {lesson.files?.length || 0}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Informations rapides */}
-            <div className="bg-gray-100 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Informations</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Niveau:</span>
-                  <span className="font-medium text-slate-900">{courseData.level}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Durée:</span>
-                  <span className="font-medium text-slate-900">{courseData.duration}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Étudiants:</span>
-                  <span className="font-medium text-slate-900">{courseData.studants}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Langue:</span>
-                  <span className="font-medium text-slate-900">Français</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -334,4 +229,4 @@ const CourseDetail = () => {
   );
 };
 
-export default CourseDetail;
+export default LessonDetails;
