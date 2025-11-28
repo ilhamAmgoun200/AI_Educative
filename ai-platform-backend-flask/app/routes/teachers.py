@@ -74,10 +74,9 @@ def get_teachers():
         result.append(t)
     return jsonify({'data': result}), 200
 
-
 @teachers_bp.route('/me', methods=['GET'])
 @jwt_required()
-def get_current_teacher():
+def get_current_teacher_profile():  
     """Récupérer le teacher actuel"""
     claims = get_jwt()
     if claims.get('user_type') != 'teacher':
@@ -85,13 +84,23 @@ def get_current_teacher():
 
     teacher_id = get_jwt_identity()
     teacher = Teacher.query.get_or_404(teacher_id)
+    
+    # Récupérer les données de base
+    teacher_data = teacher.to_dict()
+    
+    # Ajouter le nom de la matière
+    if teacher.subject:
+        teacher_data['subject_name'] = teacher.subject.subject_name
+    else:
+        teacher_data['subject_name'] = None
+        
     return jsonify({
-        'data': teacher.to_dict()
+        'data': teacher_data
     }), 200
 
 @teachers_bp.route('/me', methods=['PUT'])
 @jwt_required()
-def update_current_teacher():
+def update_current_teacher_profile():  
     """Modifier le teacher actuel"""
     claims = get_jwt()
     if claims.get('user_type') != 'teacher':
@@ -101,19 +110,28 @@ def update_current_teacher():
     teacher = Teacher.query.get_or_404(teacher_id)
     data = request.get_json()
 
+    # Mettre à jour tous les champs
     teacher.first_name = data.get('first_name', teacher.first_name)
     teacher.last_name = data.get('last_name', teacher.last_name)
+    teacher.email = data.get('email', teacher.email)
     teacher.phone = data.get('phone', teacher.phone)
-    teacher.subject_id = data.get('subject_id', teacher.subject_id)
+    teacher.cin = data.get('cin', teacher.cin)
     teacher.establishment = data.get('establishment', teacher.establishment)
     teacher.experience_years = data.get('experience_years', teacher.experience_years)
 
-    if 'password' in data:
-        teacher.set_password(data['password'])
+    # ⚠️ CORRECTION SIMPLE : Accepter subject_id directement
+    if 'subject_id' in data:
+        teacher.subject_id = data['subject_id']
 
     db.session.commit()
 
-    return jsonify({
-        'data': teacher.to_dict()
-    }), 200
+    # Préparer la réponse avec le nom de la matière
+    teacher_data = teacher.to_dict()
+    if teacher.subject:
+        teacher_data['subject_name'] = teacher.subject.subject_name
+    else:
+        teacher_data['subject_name'] = None
 
+    return jsonify({
+        'data': teacher_data
+    }), 200

@@ -14,6 +14,7 @@ import CreateLesson from './pages/CreateLesson';
 import EditLesson from './pages/EditLesson';
 import MyLessons from './pages/MyLessons';
 import LessonDetailsprof from './pages/LessonDetailsprof';
+import ProfilePage from './pages/ProfilePage';
 
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
             <Route path="/register" element={<RegistrationForm />} />
             <Route path="/loginn" element={<LoginForm />} />
             <Route path="/lesson/:documentId" element={<LessonDetailsprof />} />
+            <Route path="/profile" element={<ProfilePage />} />
 
            
 

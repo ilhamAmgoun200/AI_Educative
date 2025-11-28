@@ -93,6 +93,12 @@ const DashboardTeacher = () => {
                 </p>
                 <p className="text-slate-400 text-sm">{user?.email}</p>
               </div>
+            <button
+             onClick={() => navigate('/profile')}
+             className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-semibold"
+            >
+            👤 Mon Profil
+            </button>
               <button
                 onClick={handleLogout}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-semibold"
@@ -265,22 +271,6 @@ const DashboardTeacher = () => {
             )}
           </div>
         )}
-
-        {/* Informations enseignant */}
-        <div className="mt-8 bg-gray-100 p-6 rounded-2xl shadow-lg">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Mes Informations</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-slate-600"><strong>Matière:</strong> {user?.subject_id || 'Non renseigné'}</p>
-              <p className="text-slate-600"><strong>Établissement:</strong> {user?.establishment || 'Non renseigné'}</p>
-            </div>
-            <div>
-              <p className="text-slate-600"><strong>Expérience:</strong> {user?.experience_years || '0'} ans</p>
-              <p className="text-slate-600"><strong>CIN:</strong> {user?.cin || 'Non renseigné'}</p>
-              <p className="text-slate-600"><strong>Téléphone:</strong> {user?.phone || 'Non renseigné'}</p>
-            </div>
-          </div>
-        </div>
       </main>
     </div>
   );

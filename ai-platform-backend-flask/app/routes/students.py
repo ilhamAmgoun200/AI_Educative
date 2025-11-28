@@ -99,11 +99,16 @@ def update_current_student():
     student = Student.query.get_or_404(student_id)
     data = request.get_json()
 
+    # Mettre à jour tous les champs de base
     student.first_name = data.get('first_name', student.first_name)
     student.last_name = data.get('last_name', student.last_name)
+    student.email = data.get('email', student.email)
     student.phone = data.get('phone', student.phone)
-    student.branch = data.get('branch', student.branch)
+    student.cin = data.get('cin', student.cin)
     student.establishment = data.get('establishment', student.establishment)
+    student.birth_date = data.get('birth_date', student.birth_date)
+    student.branch = data.get('branch', student.branch)
+    student.cne = data.get('cne', student.cne)
 
     if 'password' in data:
         student.set_password(data['password'])
@@ -113,4 +118,3 @@ def update_current_student():
     return jsonify({
         'data': student.to_dict()
     }), 200
-
