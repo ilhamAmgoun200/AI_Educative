@@ -140,8 +140,7 @@ const DashboardTeacher = () => {
             <p className="text-slate-600">Gérez votre liste d'étudiants</p>
           </div>
         </div>
-
-        {/* Liste des Lessons */}
+         {/* Liste des Lessons */}
         {showLessons && (
           <div className="bg-gray-100 rounded-2xl shadow-lg p-6 mb-8">
             <div className="flex justify-between items-center mb-6">

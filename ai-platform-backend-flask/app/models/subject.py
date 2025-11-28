@@ -14,9 +14,6 @@ class Subject(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relations
-    courses = db.relationship('Course', backref='subject', lazy='dynamic', cascade='all, delete-orphan')
-
     def to_dict(self):
         """Convertir en dictionnaire"""
         return {
@@ -30,4 +27,3 @@ class Subject(db.Model):
 
     def __repr__(self):
         return f'<Subject {self.subject_name}>'
-

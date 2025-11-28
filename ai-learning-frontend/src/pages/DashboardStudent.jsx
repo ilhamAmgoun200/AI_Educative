@@ -8,6 +8,9 @@ import { API_URL } from '../config/api';
 const DashboardStudent = () => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
+
+  const [subjects, setSubjects] = useState([]);
+  const [selectedTeacherId, setSelectedTeacherId] = useState(null);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,23 +20,38 @@ const DashboardStudent = () => {
       navigate('/loginn');
       return;
     }
-    fetchCourses();
+    fetchSubjects();
   }, [isAuthenticated, navigate]);
 
-  const fetchCourses = async () => {
+  // Récupérer tous les teachers avec leur matière
+  const fetchSubjects = async () => {
     try {
       setLoading(true);
       setError('');
-      // Récupérer tous les cours publiés
+      const response = await axios.get(`${API_URL}/teachers`, { headers: getAuthHeaders() });
+      setSubjects(response.data.data || []);
+    } catch (err) {
+      console.error('Erreur chargement matières:', err);
+      setError('Impossible de charger les matières');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Récupérer les cours d’un prof sélectionné
+  const fetchCourses = async (teacherId) => {
+    try {
+      setLoading(true);
+      setError('');
+      setSelectedTeacherId(teacherId);
       const response = await axios.get(
-        `${API_URL}/courses?is_published=true&include_files=true`,
+        `${API_URL}/courses?teacher_id=${teacherId}&is_published=true&include_files=true`,
         { headers: getAuthHeaders() }
       );
-      
       setCourses(response.data.data || []);
-    } catch (error) {
-      console.error('❌ Erreur chargement courses:', error);
-      setError('Erreur lors du chargement des cours');
+    } catch (err) {
+      console.error('Erreur chargement courses:', err);
+      setError('Impossible de charger les cours');
       setCourses([]);
     } finally {
       setLoading(false);
@@ -57,101 +75,138 @@ const DashboardStudent = () => {
     <div className="min-h-screen bg-slate-900">
       {/* Header */}
       <header className="bg-slate-800 border-b border-slate-700">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">E</span>
-              </div>
-              <h1 className="text-2xl font-bold text-white">Espace Étudiant</h1>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-white">Espace Étudiant</h1>
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <p className="text-white font-semibold">{userName}</p>
+              <p className="text-slate-400 text-sm">{user?.email}</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-white font-semibold">{userName}</p>
-                <p className="text-slate-400 text-sm">{user?.email}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-semibold"
-              >
-                Déconnexion
-              </button>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-semibold"
+            >
+              Déconnexion
+            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {/* Section Cours Disponibles */}
+        {/* Section Matières */}
         <div className="bg-gray-100 rounded-2xl shadow-lg p-6 mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">Cours Disponibles</h2>
-              <p className="text-slate-600 mt-1">{courses.length} cours publiés</p>
-            </div>
-            <button
-              onClick={fetchCourses}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
-            >
-              🔄 Actualiser
-            </button>
-          </div>
-
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Matières Disponibles</h2>
           {loading ? (
-            <div className="text-center py-8">
-              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-slate-600 mt-4">Chargement des cours...</p>
-            </div>
+            <p>Chargement...</p>
           ) : error ? (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">{error}</div>
-          ) : courses.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📚</div>
-              <p className="text-slate-600 text-lg">Aucun cours disponible pour le moment</p>
-            </div>
+          ) : subjects.length === 0 ? (
+            <p>Aucune matière disponible</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => (
-                <div
-                  key={course.id}
-                  className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all border-2 border-slate-200 overflow-hidden cursor-pointer"
-                  onClick={() => handleViewCourse(course.id)}
-                >
-                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
-                    <h3 className="text-xl font-bold text-white">{course.title}</h3>
-                  </div>
-                  <div className="p-4">
-                    <p className="text-slate-600 mb-4 min-h-[60px] line-clamp-3">
-                      {course.description || 'Aucune description'}
-                    </p>
-                    {course.files && course.files.length > 0 && (
-                      <div className="flex items-center text-sm text-slate-600 mb-2">
-                        <span className="mr-2">📄</span>
-                        <span>PDF disponible</span>
-                      </div>
-                    )}
-                    {course.video_url && (
-                      <div className="flex items-center text-sm text-slate-600 mb-2">
-                        <span className="mr-2">🎥</span>
-                        <span>Vidéo disponible</span>
-                      </div>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewCourse(course.id);
-                      }}
-                      className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold"
-                    >
-                      👁️ Voir le cours
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subjects.map((teacher) => (
+  <div
+    key={teacher.id}
+    className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border ${
+      selectedTeacherId === teacher.id ? 'border-blue-500 scale-105' : 'border-gray-200'
+    } p-6 flex flex-col justify-between`}
+    onClick={() => fetchCourses(teacher.id)}
+  >
+    {/* Matière */}
+    <div>
+      <h3 className="text-2xl font-bold text-blue-700 mb-2">
+        {teacher.subject?.subject_name || 'Matière inconnue'}
+      </h3>
+      {teacher.subject?.description && (
+        <p className="text-gray-600 mb-1">{teacher.subject.description}</p>
+      )}
+      {teacher.subject?.level && (
+        <span className="inline-block bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
+          Niveau: {teacher.subject.level}
+        </span>
+      )}
+    </div>
+
+    {/* Professeur */}
+    <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-col gap-2 transform transition-all hover:scale-105">
+      <p className="font-semibold text-gray-800">
+        Professeur: {teacher.first_name} {teacher.last_name}
+      </p>
+      {teacher.email && (
+        <p className="text-gray-600 text-sm">
+          📧 {teacher.email}
+        </p>
+      )}
+      {teacher.phone && (
+        <p className="text-gray-600 text-sm">
+          📞 {teacher.phone}
+        </p>
+      )}
+    </div>
+  </div>
+))}
+
+
             </div>
           )}
         </div>
+
+        {selectedTeacherId && (
+  <div className="bg-gray-100 rounded-2xl shadow-lg p-6 mb-8">
+    <h2 className="text-2xl font-bold text-slate-900 mb-4">Cours Disponibles</h2>
+    {loading ? (
+      <p>Chargement...</p>
+    ) : error ? (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">{error}</div>
+    ) : courses.length === 0 ? (
+      <p>Aucun cours disponible pour cette matière</p>
+    ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {courses.map((course) => (
+          <div
+            key={course.id}
+            className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-200 p-6 flex flex-col justify-between`}
+            onClick={() => handleViewCourse(course.id)}
+          >
+            {/* Info du cours */}
+            <div>
+              <h3 className="text-2xl font-bold text-blue-700 mb-2">{course.title}</h3>
+              {course.description && (
+                <p className="text-gray-600 mb-1">{course.description}</p>
+              )}
+              {course.level && (
+                <span className="inline-block bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
+                  Niveau: {course.level}
+                </span>
+              )}
+            </div>
+
+            {/* Fichiers et vidéos */}
+            <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-col gap-2 transform transition-all hover:scale-105">
+              {course.files && course.files.length > 0 && (
+                <p className="text-gray-600 text-sm">📄 PDF disponible</p>
+              )}
+              {course.video_url && (
+                <p className="text-gray-600 text-sm">🎥 Vidéo disponible</p>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewCourse(course.id);
+                }}
+                className="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold"
+              >
+                👁️ Voir le cours
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
+
 
         {/* Informations étudiant */}
         <div className="mt-8 bg-gray-100 p-6 rounded-2xl shadow-lg">

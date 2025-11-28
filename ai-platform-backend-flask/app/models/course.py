@@ -14,7 +14,7 @@ class Course(db.Model):
     order_no = db.Column(db.Integer)
     is_published = db.Column(db.Boolean, default=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), nullable=False, index=True)
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), index=True)
+    # subject_id supprimé
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -23,7 +23,6 @@ class Course(db.Model):
     exercises = db.relationship('Exercise', backref='course', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self, include_files=False, include_exercises=False, include_teacher=False):
-        """Convertir en dictionnaire"""
         data = {
             'id': self.id,
             'title': self.title,
@@ -32,14 +31,13 @@ class Course(db.Model):
             'order_no': self.order_no,
             'is_published': self.is_published,
             'teacher_id': self.teacher_id,
-            'subject_id': self.subject_id,
+            # 'subject_id' supprimé
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
         if include_files:
             data['files'] = [file.to_dict() for file in self.files]
-            # Pour compatibilité avec le frontend
             if data['files']:
                 data['course_pdf_url'] = data['files'][0]['file_name']
 
@@ -59,7 +57,6 @@ class Course(db.Model):
     def __repr__(self):
         return f'<Course {self.title}>'
 
-
 class CourseFile(db.Model):
     __tablename__ = 'course_files'
 
@@ -72,7 +69,6 @@ class CourseFile(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
-        """Convertir en dictionnaire"""
         return {
             'id': self.id,
             'course_id': self.course_id,
@@ -85,4 +81,3 @@ class CourseFile(db.Model):
 
     def __repr__(self):
         return f'<CourseFile {self.file_name}>'
-

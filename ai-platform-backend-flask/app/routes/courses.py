@@ -21,15 +21,13 @@ def allowed_file(filename):
 def get_courses():
     """Récupérer tous les courses (avec filtres optionnels)"""
     teacher_id = request.args.get('teacher_id', type=int)
-    subject_id = request.args.get('subject_id', type=int)
     is_published = request.args.get('is_published', type=bool)
 
     query = Course.query
 
     if teacher_id:
         query = query.filter_by(teacher_id=teacher_id)
-    if subject_id:
-        query = query.filter_by(subject_id=subject_id)
+    
     if is_published is not None:
         query = query.filter_by(is_published=is_published)
 
@@ -101,7 +99,6 @@ def create_course():
             order_no=data.get('order_no'),
             is_published=data.get('is_published', False),
             teacher_id=teacher_id,
-            subject_id=data.get('subject_id')
         )
 
         db.session.add(course)
@@ -141,7 +138,6 @@ def update_course(course_id):
     course.video_url = data.get('video_url', course.video_url)
     course.order_no = data.get('order_no', course.order_no)
     course.is_published = data.get('is_published', course.is_published)
-    course.subject_id = data.get('subject_id', course.subject_id)
 
     db.session.commit()
 

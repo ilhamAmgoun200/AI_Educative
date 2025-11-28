@@ -16,7 +16,6 @@ import MyLessons from './pages/MyLessons';
 import LessonDetailsprof from './pages/LessonDetailsprof';
 
 
-
 function App() {
   return (
     <Router>
@@ -31,6 +30,7 @@ function App() {
             <Route path="/register" element={<RegistrationForm />} />
             <Route path="/loginn" element={<LoginForm />} />
             <Route path="/lesson/:documentId" element={<LessonDetailsprof />} />
+
            
 
 
