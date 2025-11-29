@@ -30,6 +30,40 @@ const LessonDetails = () => {
     fetchExplanationsHistory();
   }, [id]);
 
+
+  //ajoute
+  const handleMarkCompleted = async () => {
+  try {
+    await axios.post(
+      `${API_URL}/progress/mark-completed/${id}`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+    alert('Cours marqué comme terminé !');
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur lors du marquage');
+  }
+};
+  // Marquer le cours comme vu automatiquement
+useEffect(() => {
+  if (lesson) {
+    markCourseAsViewed();
+  }
+}, [lesson]);
+
+const markCourseAsViewed = async () => {
+  try {
+    await axios.post(
+      `${API_URL}/progress/mark-viewed/${id}`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+  } catch (error) {
+    console.log('Erreur marquage progression:', error);
+  }
+};
+
   const fetchLesson = async () => {
     try {
       setLoading(true);
@@ -381,6 +415,15 @@ const LessonDetails = () => {
                 </a>
               </div>
             )}
+            {/* Bouton pour marquer comme terminé */}
+<div className="bg-white rounded-lg shadow-md p-6 mb-6">
+  <button
+    onClick={handleMarkCompleted}
+    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all w-full"
+  >
+    ✓ Marquer ce cours comme terminé
+  </button>
+</div>
 
             {/* PDF */}
             <div className="bg-white rounded-lg shadow-md p-6">

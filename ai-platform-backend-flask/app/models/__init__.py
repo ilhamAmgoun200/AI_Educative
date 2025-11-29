@@ -7,5 +7,7 @@ from app.models.subject import Subject
 from app.models.course import Course, CourseFile
 from app.models.exercise import Exercise
 from app.models.course_explanation import CourseExplanation
+from app.models.student_progress import StudentProgress
 
-__all__ = ['Teacher', 'Student', 'Subject', 'Course', 'CourseFile', 'Exercise', 'CourseExplanation']
+
+__all__ = ['Teacher', 'Student', 'Subject', 'Course', 'CourseFile', 'Exercise', 'CourseExplanation', 'StudentProgress']

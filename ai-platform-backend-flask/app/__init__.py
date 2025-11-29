@@ -47,7 +47,7 @@ def create_app(config_class=Config):
     from app.routes.subjects import subjects_bp
     from app.routes.exercises import exercises_bp
     from app.routes.ai_explanations import ai_explanations_bp
-
+    from app.routes.student_progress import progress_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(teachers_bp, url_prefix='/api/teachers')
@@ -56,7 +56,7 @@ def create_app(config_class=Config):
     app.register_blueprint(subjects_bp, url_prefix='/api/subjects')
     app.register_blueprint(exercises_bp, url_prefix='/api/exercises')
     app.register_blueprint(ai_explanations_bp, url_prefix='/api/ai')
-
+    app.register_blueprint(progress_bp, url_prefix='/api/progress')
 
     # Route pour servir les fichiers uploadés
     from flask import send_from_directory
