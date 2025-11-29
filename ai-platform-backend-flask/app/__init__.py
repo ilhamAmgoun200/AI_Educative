@@ -8,6 +8,7 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from config import Config
 
+
 # Initialisation des extensions
 db = SQLAlchemy()
 migrate = Migrate()
@@ -45,6 +46,8 @@ def create_app(config_class=Config):
     from app.routes.courses import courses_bp
     from app.routes.subjects import subjects_bp
     from app.routes.exercises import exercises_bp
+    from app.routes.ai_explanations import ai_explanations_bp
+
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(teachers_bp, url_prefix='/api/teachers')
@@ -52,6 +55,8 @@ def create_app(config_class=Config):
     app.register_blueprint(courses_bp, url_prefix='/api/courses')
     app.register_blueprint(subjects_bp, url_prefix='/api/subjects')
     app.register_blueprint(exercises_bp, url_prefix='/api/exercises')
+    app.register_blueprint(ai_explanations_bp, url_prefix='/api/ai')
+
 
     # Route pour servir les fichiers uploadés
     from flask import send_from_directory
