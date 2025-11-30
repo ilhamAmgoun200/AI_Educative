@@ -210,3 +210,24 @@ def upload_file(course_id):
 
     return jsonify({'error': 'Type de fichier non autorisé'}), 400
 
+@courses_bp.route('/uploads/courses/<path:filename>', methods=['GET'])
+def serve_course_file(filename):
+    """Servir les fichiers PDF/documents des cours"""
+    try:
+        # Chemin absolu vers le dossier uploads/courses
+        upload_folder = os.path.join('uploads', 'courses')
+        
+        print(f"[DEBUG] Fichier demandé: {filename}")
+        print(f"[DEBUG] Dossier: {upload_folder}")
+        
+        file_path = os.path.join(upload_folder, filename)
+        
+        if not os.path.exists(file_path):
+            print(f"[ERROR] Fichier introuvable: {file_path}")
+            return jsonify({'error': 'Fichier introuvable'}), 404
+        
+        return send_file(file_path)
+        
+    except Exception as e:
+        print(f"[ERROR] {str(e)}")
+        return jsonify({'error': str(e)}), 500
