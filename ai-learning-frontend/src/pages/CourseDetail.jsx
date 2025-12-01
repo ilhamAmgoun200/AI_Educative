@@ -312,36 +312,7 @@ const LessonDetails = () => {
         <div className="text-xl text-gray-600">Chargement du cours...</div>
       </div>
     );
-  } catch (error) {
-    console.log('Erreur marquage progression:', error);
   }
-};
-
-  const fetchLesson = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_URL}/courses/${id}?include_files=true`);
-      setLesson(response.data.data);
-      setError('');
-    } catch (error) {
-      console.error("Erreur lors du chargement du cours :", error);
-      setError('Impossible de charger le cours');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCurrentExplanation = async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/ai/courses/${id}/explanation`,
-        { headers: getAuthHeaders() }
-      );
-      setCurrentExplanation(response.data.data);
-    } catch (error) {
-      console.log("Aucune explication actuelle trouvée");
-    }
-  };
 
   if (error && !lesson) {
     return (
@@ -362,14 +333,12 @@ const LessonDetails = () => {
       {/* Bouton Retour */}
       <div className="mb-6">
         <button
-          onClick={() => navigate('/')}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all"
+          onClick={() => navigate(-1)}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-all"
         >
-          Retour à l'accueil
+          ← Retour
         </button>
       </div>
-    );
-  }
 
       {/* Header avec dégradé coloré */}
       <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-lg shadow-lg p-6 mb-6 text-white">
@@ -403,6 +372,7 @@ const LessonDetails = () => {
             <p className="font-semibold text-white mt-1">{chatMessages.length}</p>
           </div>
         </div>
+      </div>
 
       {/* Contenu principal - 2 colonnes */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -582,52 +552,8 @@ const LessonDetails = () => {
             ) : (
               <p className="text-gray-500">Aucun fichier disponible</p>
             )}
-            {/* Bouton pour marquer comme terminé */}
-<div className="bg-white rounded-lg shadow-md p-6 mb-6">
-  <button
-    onClick={handleMarkCompleted}
-    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all w-full"
-  >
-    ✓ Marquer ce cours comme terminé
-  </button>
-</div>
-
-            {/* PDF */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">📄 Supports de cours</h2>
-              {lesson.files && lesson.files.length > 0 ? (
-                <div className="space-y-3">
-                  {lesson.files.map((pdf, index) => (
-                    <div key={pdf.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-semibold text-gray-800">{pdf.file_name}</p>
-                          <p className="text-sm text-gray-500">Document {index + 1}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleOpenPdfViewer(pdf)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all"
-                          >
-                            👁️ Voir
-                          </button>
-                          <a
-                            href={getPdfUrl(pdf.file_name)}
-                            download
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-                          >
-                            📥 Télécharger
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Aucun fichier disponible</p>
-              )}
-            </div>
           </div>
+        </div>
 
         {/* Chat - Droite seul (1/3) */}
         <div className="lg:col-span-1">
