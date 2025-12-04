@@ -221,25 +221,25 @@ const handleCancel = () => {
     <div className="profile-container">
       <div className="profile-form">
         <div className="profile-header">
-          <div className="header-top">
-            <button
-              onClick={handleBackToDashboard}
-              className="back-btn"
-              title="Retour au dashboard"
-            >
-              ← Retour
-            </button>
-            <h2>Mon Profil</h2>
-          </div>
-          {!isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="edit-btn"
-            >
-              ✏️ Modifier le profil
-            </button>
-          )}
-        </div>
+          <button
+            onClick={handleBackToDashboard}
+            className="back-btn"
+            title="Retour au dashboard"
+          >
+          ← Retour
+          </button>
+
+       <h2>Mon Profil</h2>
+
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="edit-btn"
+          >
+          Modifier le profil
+          </button>
+        )}
+      </div>
 
         {message && (
           <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>

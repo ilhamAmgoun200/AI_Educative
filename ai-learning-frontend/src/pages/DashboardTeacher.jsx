@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { getAuthHeaders } from '../utils/auth';
+import UserMenu from '../components/UserMenu';
 import { API_URL } from '../config/api';
 
 const DashboardTeacher = () => {
@@ -74,6 +75,10 @@ const DashboardTeacher = () => {
     }
   };
 
+  const userName = user?.first_name && user?.last_name
+  ? `${user.first_name} ${user.last_name}`
+  : user?.email || 'Utilisateur';
+
   return (
     <div className="min-h-screen bg-slate-900">
       {/* Header */}
@@ -86,26 +91,13 @@ const DashboardTeacher = () => {
               </div>
               <h1 className="text-2xl font-bold text-white">Espace Enseignant</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-white font-semibold">
-                  {user?.first_name} {user?.last_name}
-                </p>
-                <p className="text-slate-400 text-sm">{user?.email}</p>
-              </div>
-            <button
-             onClick={() => navigate('/profile')}
-             className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-semibold"
-            >
-            👤 Mon Profil
-            </button>
-              <button
-                onClick={handleLogout}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all duration-200 font-semibold"
-              >
-                Déconnexion
-              </button>
-            </div>
+          <div className="flex items-center space-x-4">
+           <div className="text-right hidden md:block">
+            <p className="text-white font-semibold">{userName}</p>
+            <p className="text-slate-400 text-sm">{user?.email}</p>
+           </div>
+            <UserMenu />
+          </div>
           </div>
         </div>
       </header>
