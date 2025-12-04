@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { getAuthHeaders } from '../utils/auth';
 import { API_URL } from '../config/api';
+import UserMenu from '../components/UserMenu';
 
 const MyLessons = () => {
   const navigate = useNavigate();
@@ -91,7 +92,9 @@ const handleDeleteLesson = async (courseId, courseTitle) => {
   }
 };
 
-
+  const userName = user?.first_name && user?.last_name
+  ? `${user.first_name} ${user.last_name}`
+  : user?.email || 'Utilisateur';
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -118,6 +121,13 @@ const handleDeleteLesson = async (courseId, courseTitle) => {
                 <p className="text-slate-400 text-sm">{user?.email}</p>
               </div>
             </div>
+          <div className="flex items-center space-x-4">
+           <div className="text-right hidden md:block">
+            <p className="text-white font-semibold">{userName}</p>
+            <p className="text-slate-400 text-sm">{user?.email}</p>
+           </div>
+            <UserMenu />
+          </div>
           </div>
         </div>
       </header>
