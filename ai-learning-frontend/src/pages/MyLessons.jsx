@@ -6,6 +6,11 @@ import { getAuthHeaders } from '../utils/auth';
 import { API_URL } from '../config/api';
 import UserMenu from '../components/UserMenu';
 
+const BADGE_STYLES = {
+  published: 'bg-green-100 text-green-800 border-green-200',
+  draft: 'bg-orange-100 text-orange-800 border-orange-200',
+};
+
 const MyLessons = () => {
   const navigate = useNavigate();
   const { teacherId, isAuthenticated, user } = useAuth();
@@ -21,9 +26,10 @@ const MyLessons = () => {
     if (teacherId) {
       fetchLessons();
     } else {
-      setError('❌ Impossible de récupérer votre identifiant TEACHER. Veuillez vous reconnecter.');
+      setError('Impossible de récupérer votre identifiant TEACHER. Veuillez vous reconnecter.');
       setLoading(false);
     }
+    // eslint-disable-next-line
   }, [teacherId, isAuthenticated, navigate]);
 
   const fetchLessons = async () => {
@@ -32,7 +38,6 @@ const MyLessons = () => {
       setLoading(false);
       return;
     }
-
     try {
       setLoading(true);
       setError('');
@@ -40,18 +45,12 @@ const MyLessons = () => {
         `${API_URL}/courses?teacher_id=${teacherId}&include_files=true`,
         { headers: getAuthHeaders() }
       );
-      
-      console.log('✅ Réponse complète:', response.data);
-      console.log('✅ Courses data:', response.data.data);
-      
       if (response.data.data && Array.isArray(response.data.data)) {
         setLessons(response.data.data);
-        console.log('✅ Nombre de cours:', response.data.data.length);
       } else {
         setLessons([]);
       }
     } catch (error) {
-      console.error('❌ Erreur chargement lessons:', error);
       setError('Erreur lors du chargement des cours');
       setLessons([]);
     } finally {
@@ -59,219 +58,136 @@ const MyLessons = () => {
     }
   };
 
-const handleViewLesson = (courseId) => {
-  navigate(`/view-lesson/${courseId}`);
-};
-
-const handleEditLesson = async (courseId) => {
-  navigate(`/edit-lesson/${courseId}`);
-};
-
-
-const handleDeleteLesson = async (courseId, courseTitle) => {
-  if (!window.confirm(`Voulez-vous vraiment supprimer "${courseTitle}" ?`)) return;
-
-  try {
-    await axios.delete(`${API_URL}/courses/${courseId}`, {
-      headers: getAuthHeaders(),
-    });
-
-    alert("Cours supprimé !");
-    fetchLessons();
-  } catch (error) {
-    if (error.response?.status === 404) {
-      alert(`Cours introuvable (ID: ${courseId})`);
-    } else if (error.response?.status === 403) {
-      alert('Vous n\'avez pas la permission de supprimer ce cours.');
-    } else if (error.response?.status === 401) {
-      alert('Session expirée. Veuillez vous reconnecter.');
-    } else {
-      console.error(error.response || error);
-      alert("Erreur lors de la suppression");
+  const handleViewLesson = (courseId) => navigate(`/view-lesson/${courseId}`);
+  const handleEditLesson = (courseId) => navigate(`/edit-lesson/${courseId}`);
+  const handleDeleteLesson = async (courseId, courseTitle) => {
+    if (!window.confirm(`Voulez-vous vraiment supprimer "${courseTitle}" ?`)) return;
+    try {
+      await axios.delete(`${API_URL}/courses/${courseId}`, {
+        headers: getAuthHeaders(),
+      });
+      fetchLessons();
+    } catch (error) {
+      alert('Erreur lors de la suppression');
     }
-  }
-};
+  };
 
   const userName = user?.first_name && user?.last_name
-  ? `${user.first_name} ${user.last_name}`
-  : user?.email || 'Utilisateur';
+    ? `${user.first_name} ${user.last_name}`
+    : user?.email || 'Utilisateur';
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <header className="bg-slate-800 border-b border-slate-700">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => navigate('/dashboard-teacher')}
-                className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-all"
-              >
-                ← Retour
-              </button>
-              <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">📚</span>
-              </div>
-              <h1 className="text-2xl font-bold text-white">Mes Cours</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto flex justify-between items-center px-4 py-3">
+          <button
+            onClick={() => navigate('/dashboard-teacher')}
+            className="rounded-lg px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition"
+          >
+            ← Tableau de bord
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden md:block leading-tight">
+              <span className="font-semibold text-gray-900">{userName}</span>
+              <p className="text-gray-500 text-xs">{user?.email}</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-white font-semibold">
-                  {user?.first_name} {user?.last_name}
-                </p>
-                <p className="text-slate-400 text-sm">{user?.email}</p>
-              </div>
-            </div>
-          <div className="flex items-center space-x-4">
-           <div className="text-right hidden md:block">
-            <p className="text-white font-semibold">{userName}</p>
-            <p className="text-slate-400 text-sm">{user?.email}</p>
-           </div>
             <UserMenu />
-          </div>
           </div>
         </div>
       </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <div className="bg-gray-100 rounded-2xl shadow-lg p-6">
-          <div className="flex justify-between items-center mb-6">
+      {/* Main */}
+      <main className="max-w-7xl mx-auto px-4 py-10 w-full">
+        <div className="w-full bg-white border border-gray-100 rounded-2xl shadow-md p-8">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">Liste de mes cours</h2>
-              <p className="text-slate-600 mt-1">{lessons.length} cours au total</p>
+              <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Mes Cours</h2>
+              <span className="block mt-2 text-gray-500 font-medium">
+                {lessons.length} cours au total
+              </span>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex gap-3">
               <button
                 onClick={fetchLessons}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
-              >
-                🔄 Actualiser
-              </button>
+                className="flex items-center rounded-md px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border border-gray-200 transition"
+              >🔄 Actualiser</button>
               <button
                 onClick={() => navigate('/create-lesson')}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all"
-              >
-                ➕ Nouveau cours
-              </button>
+                className="flex items-center rounded-md px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 shadow transition"
+              >+ Nouveau cours</button>
             </div>
           </div>
-
           {loading ? (
-            <div className="text-center py-8">
-              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-slate-600 mt-4">Chargement des cours...</p>
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-10 h-10 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+              <span className="text-gray-400">Chargement des cours…</span>
             </div>
           ) : error ? (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-orange-50 border border-orange-200 text-orange-700 text-base rounded-xl py-4 px-6 font-medium text-center">
               {error}
             </div>
           ) : lessons.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📚</div>
-              <p className="text-slate-600 text-lg mb-4">Vous n'avez pas encore créé de cours</p>
+            <div className="flex flex-col items-center justify-center py-20">
+              <span className="text-6xl mb-3">📘</span>
+              <p className="text-gray-400 text-lg">Vous n&apos;avez pas encore créé de cours.</p>
               <button
                 onClick={() => navigate('/create-lesson')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all"
-              >
-                Créer mon premier cours
-              </button>
+                className="mt-4 rounded-md bg-blue-600 text-white px-6 py-2 flex items-center gap-2 font-medium hover:bg-blue-700 transition"
+              >Créer mon premier cours</button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-              {lessons.map((lesson) => {
-                console.log('🔍 Rendering lesson:', lesson);
-                
-                // ✅ CORRECTION: Les données sont directement dans lesson, pas dans lesson.attributes
-                // Flask retourne directement les données dans response.data.data
-                const courseData = lesson;
-                
-                if (!courseData || !courseData.title) {
-                  console.warn('⚠️ Course sans titre:', lesson);
-                  return null;
-                }
-
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {lessons.map((courseData) => {
+                if (!courseData || !courseData.title) return null;
                 const courseId = courseData.id;
-                
+                const published = courseData.is_published;
+                const badge = published
+                  ? BADGE_STYLES.published
+                  : BADGE_STYLES.draft;
+
                 return (
                   <div
                     key={courseId}
-                    className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all border-2 border-slate-200 overflow-hidden cursor-pointer"
+                    className="bg-white border border-gray-100 shadow-sm rounded-xl p-6 flex flex-col justify-between hover:border-blue-300 transition group"
                     onClick={() => handleViewLesson(courseId)}
                   >
-                    {/* En-tête de la carte */}
-                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-xl font-bold text-white">
-                          {courseData.title || 'Sans titre'}
-                        </h3>
-                        {courseData.is_published ? (
-                          <span className="bg-green-400 text-white px-2 py-1 rounded-full text-xs font-bold">
-                            ✓ Publié
-                          </span>
-                        ) : (
-                          <span className="bg-yellow-400 text-slate-900 px-2 py-1 rounded-full text-xs font-bold">
-                            Brouillon
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{courseData.title}</h3>
+                      <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium border ${badge}`}>
+                        {published ? 'Publié' : 'Brouillon'}
+                      </span>
                     </div>
-
-                    {/* Contenu de la carte */}
-                    <div className="p-4">
-                      <p className="text-slate-600 mb-4 min-h-[60px] line-clamp-3">
-                        {courseData.description || 'Aucune description disponible'}
-                      </p>
-
-                      {/* Informations supplémentaires */}
-                      <div className="space-y-2 mb-4">
-                        {courseData.order_no && (
-                          <div className="flex items-center text-sm text-slate-600">
-                            <span className="mr-2">📊</span>
-                            <span>Ordre: {courseData.order_no}</span>
-                          </div>
-                        )}
-                        
-                        {courseData.video_url && (
-                          <div className="flex items-center text-sm text-slate-600">
-                            <span className="mr-2">🎥</span>
-                            <span>Vidéo disponible</span>
-                          </div>
-                        )}
-                        
-                        {courseData.files && courseData.files.length > 0 && (
-                          <div className="flex items-center text-sm text-slate-600">
-                            <span className="mr-2">📄</span>
-                            <span>PDF disponible</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Date de création */}
-                      <p className="text-xs text-slate-400 mb-4">
-                        Créé le {new Date(courseData.created_at).toLocaleDateString('fr-FR')}
-                      </p>
-
-                      {/* Boutons d'action */}
-                      <div className="flex gap-2">
-                        <button
-                           onClick={(e) => { e.stopPropagation(); handleViewLesson(courseId); }}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-all font-semibold"
-                        >
-                          👁️ Voir
-                        </button>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); handleEditLesson(courseId); }}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-all font-semibold"
-                        >
-                          ✏️ Modifier
-                        </button>
-                        <button
-                           onClick={(e) => { e.stopPropagation(); handleDeleteLesson(courseId, courseData.title); }}
-                          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all"
-                          title="Supprimer"
-                        >
-                          🗑️
-                        </button>
-                      </div>
+                    <div className="text-gray-500 text-sm mb-4 min-h-[48px] line-clamp-3">
+                      {courseData.description || 'Aucune description disponible'}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-4 text-xs">
+                      {courseData.order_no && (
+                        <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">Ordre: {courseData.order_no}</span>
+                      )}
+                      {courseData.video_url && (
+                        <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700">Vidéo</span>
+                      )}
+                      {courseData.files && courseData.files.length > 0 && (
+                        <span className="px-2 py-0.5 rounded bg-green-50 text-green-700">PDF</span>
+                      )}
+                      <span className="ml-auto text-gray-400 font-mono">
+                        {new Date(courseData.created_at).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleViewLesson(courseId); }}
+                        className="flex-1 rounded-md text-white bg-blue-500 hover:bg-blue-600 py-2 font-medium text-sm transition"
+                      >👁️ Voir</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEditLesson(courseId); }}
+                        className="flex-1 rounded-md text-white bg-green-500 hover:bg-green-600 py-2 font-medium text-sm transition"
+                      >✏️ Modifier</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteLesson(courseId, courseData.title); }}
+                        className="rounded-md px-3 py-2 bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 font-medium text-sm transition"
+                        title="Supprimer"
+                      >🗑️</button>
                     </div>
                   </div>
                 );

@@ -15,6 +15,10 @@ import EditLesson from './pages/EditLesson';
 import MyLessons from './pages/MyLessons';
 import LessonDetailsprof from './pages/LessonDetailsprof';
 import ProfilePage from './pages/ProfilePage';
+import AddExercise from './pages/AddExercise';
+import EditExercise from './pages/EditExercise';
+import ViewExercise from './pages/ViewExercise';  
+
 
 
 function App() {
@@ -47,6 +51,10 @@ function App() {
         />
         <Route path="/edit-lesson/:lessonId" element={<EditLesson />} />
         <Route path="/my-lessons" element={<MyLessons />} />
+        <Route path="/add-exercise/:lessonId" element={<AddExercise />} />
+        <Route path="/edit-exercise/:exerciseId" element={<EditExercise />} />
+        <Route path="/view-exercise/:exerciseId" element={<ViewExercise />} />
+
 
 
         <Route 

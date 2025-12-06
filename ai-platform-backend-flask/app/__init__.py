@@ -1,12 +1,14 @@
 """
 Application Flask principale
 """
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from config import Config
+import os
+
 
 
 # Initialisation des extensions
@@ -24,8 +26,10 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
+    
+    # Configuration CORS plus permissive
     cors.init_app(app, 
-        resources={r"/api/*": {
+        resources={r"/*": {  # Permet TOUS les endpoints
             "origins": ["http://localhost:3000"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
@@ -34,6 +38,14 @@ def create_app(config_class=Config):
             "max_age": 3600
         }}
     )
+
+    
+    # === 📌 ICI : ROUTE POUR SERVIR PDF IA ===
+    AI_EXO_DIR = os.path.join(os.path.dirname(__file__), "uploads", "ai_exercises")
+
+    @app.route('/ai-exercises/<path:filename>')
+    def serve_ai_exercise(filename):
+        return send_from_directory(AI_EXO_DIR, filename)
     
     # Handlers d'erreur JWT
     @jwt.expired_token_loader
@@ -70,18 +82,22 @@ def create_app(config_class=Config):
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
 
     # Route pour servir les fichiers uploadés
-    from flask import send_from_directory
-    import os
-    
     @app.route('/uploads/courses/<filename>')
-    def uploaded_file(filename):
-        """Servir les fichiers uploadés"""
+    def uploaded_courses_file(filename):
+        """Servir les fichiers de cours uploadés"""
         upload_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads', 'courses')
         return send_from_directory(upload_folder, filename)
-
-    # Les tables seront créées via Flask-Migrate
-    # Ne pas utiliser db.create_all() en production avec PostgreSQL
-    # Utiliser: flask db upgrade
+    
+    @app.route('/uploads/exercises/<filename>')
+    def uploaded_exercises_file(filename):
+        """Servir les fichiers d'exercices uploadés"""
+        upload_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads', 'exercises')
+        return send_from_directory(upload_folder, filename)
+    
+    @app.route('/uploads/ai_exercises/<filename>')
+    def uploaded_ai_exercises_file(filename):
+        """Servir les exercices générés par IA"""
+        upload_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads', 'ai_exercises')
+        return send_from_directory(upload_folder, filename)
     
     return app
-
