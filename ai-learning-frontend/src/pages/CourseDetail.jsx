@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import LikeButton from '../components/LikeButton';
 
 // Simuler les imports (à adapter selon votre projet)
 const API_URL = 'http://localhost:5000/api';
@@ -324,7 +325,9 @@ const LessonDetails = () => {
         >
           Retour à l'accueil
         </button>
+        
       </div>
+      
     );
   }
   return (
@@ -338,6 +341,12 @@ const LessonDetails = () => {
         >
           ← Retour
         </button>
+        <button
+    onClick={() => navigate('/favorites')} // Créeras cette page plus tard
+    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+  >
+    ❤️ Mes Favoris
+  </button>
       </div>
 
       {/* Header avec dégradé coloré */}
@@ -371,6 +380,16 @@ const LessonDetails = () => {
             <p className="text-sm text-purple-200">💬 Messages</p>
             <p className="font-semibold text-white mt-1">{chatMessages.length}</p>
           </div>
+          <div className="text-center">
+             <p className="text-sm text-purple-200">❤️ Favoris</p>
+  <div className="flex items-center justify-center mt-1">
+    <LikeButton 
+      courseId={id} 
+      showCount={true} 
+      size="medium" 
+    />
+  </div>
+  </div>
         </div>
       </div>
 

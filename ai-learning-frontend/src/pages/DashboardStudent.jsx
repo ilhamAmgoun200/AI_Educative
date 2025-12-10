@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getAuthHeaders } from '../utils/auth';
 import { API_URL } from '../config/api';
 import UserMenu from '../components/UserMenu';
+import LikeButton from '../components/LikeButton';
 
 // 👉 IMPORT DU COMPOSANT PROGRESSCARD
 import ProgressCard from './ProgressCard';
@@ -196,12 +197,19 @@ const DashboardStudent = () => {
                         <p className="text-gray-600 text-sm">🎥 Vidéo disponible</p>
                       )}
 
+                      <div className="flex justify-between items-center mb-2">
+  <span className="text-sm text-slate-600">
+    {course.created_at ? new Date(course.created_at).toLocaleDateString('fr-FR') : ''}
+  </span>
+  <LikeButton courseId={course.id} size="small" />
+</div>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleViewCourse(course.id);
                         }}
-                        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold"
+                        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold w-full"
                       >
                         👁️ Voir le cours
                       </button>

@@ -70,6 +70,7 @@ def create_app(config_class=Config):
     from app.routes.ai_explanations import ai_explanations_bp
     from app.routes.student_progress import progress_bp
     from app.routes.chat_routes import chat_bp
+    from app.routes.likes import likes_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(teachers_bp, url_prefix='/api/teachers')
@@ -80,7 +81,8 @@ def create_app(config_class=Config):
     app.register_blueprint(ai_explanations_bp, url_prefix='/api/ai')
     app.register_blueprint(progress_bp, url_prefix='/api/progress')
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
-
+    app.register_blueprint(likes_bp, url_prefix='/api/likes')
+    
     # Route pour servir les fichiers uploadés
     @app.route('/uploads/courses/<filename>')
     def uploaded_courses_file(filename):

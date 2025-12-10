@@ -18,6 +18,7 @@ import ProfilePage from './pages/ProfilePage';
 import AddExercise from './pages/AddExercise';
 import EditExercise from './pages/EditExercise';
 import ViewExercise from './pages/ViewExercise';  
+import FavoritesPage from './pages/FavoritesPage';
 
 
 
@@ -49,11 +50,22 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+        <Route 
+  path="/favorites" 
+  element={
+    <ProtectedRoute requiredUserType="student">
+      <FavoritesPage />
+    </ProtectedRoute>
+  } 
+/>
+
         <Route path="/edit-lesson/:lessonId" element={<EditLesson />} />
         <Route path="/my-lessons" element={<MyLessons />} />
         <Route path="/add-exercise/:lessonId" element={<AddExercise />} />
         <Route path="/edit-exercise/:exerciseId" element={<EditExercise />} />
         <Route path="/view-exercise/:exerciseId" element={<ViewExercise />} />
+        
 
 
 
