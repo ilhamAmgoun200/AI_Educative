@@ -23,9 +23,7 @@ class Student(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relations
-    exercises = db.relationship('Exercise', backref='student', lazy='dynamic', cascade='all, delete-orphan')
-
+    
     def set_password(self, password):
         """Hasher le mot de passe"""
         self.password_hash = generate_password_hash(password)

@@ -24,10 +24,7 @@ const EditLesson = () => {
 
   const { user } = useAuth();
 
-  // Charger les données du course
-  useEffect(() => {
-    fetchLesson();
-  }, [lessonId]);
+  useEffect(() => { fetchLesson(); }, [lessonId]);
 
   const fetchLesson = async () => {
     try {
@@ -36,11 +33,7 @@ const EditLesson = () => {
         `${API_URL}/courses/${lessonId}?include_files=true`,
         { headers: getAuthHeaders() }
       );
-
       const courseData = response.data.data;
-      
-      console.log('Course chargé:', courseData);
-
       setFormData({
         title: courseData.title || '',
         description: courseData.description || '',
@@ -49,14 +42,9 @@ const EditLesson = () => {
         is_published: courseData.is_published || false,
         course_pdf: null
       });
-
-      if (courseData.files && courseData.files.length > 0) {
-        setExistingPdf(courseData.files[0]);
-      }
-
+      if (courseData.files && courseData.files.length > 0) setExistingPdf(courseData.files[0]);
       setError('');
     } catch (error) {
-      console.error('Erreur chargement lesson:', error);
       setError('Impossible de charger le cours');
     } finally {
       setLoading(false);
@@ -84,9 +72,8 @@ const EditLesson = () => {
     setSubmitting(true);
     setError('');
     setSuccess('');
-
     try {
-      // Étape 1: Mettre à jour les données du course
+      // 1. Update course data
       const courseData = {
         title: formData.title,
         description: formData.description,
@@ -94,9 +81,6 @@ const EditLesson = () => {
         order_no: formData.order_no ? parseInt(formData.order_no) : null,
         is_published: formData.is_published
       };
-
-      console.log('📤 Mise à jour du course:', courseData);
-
       await axios.put(
         `${API_URL}/courses/${lessonId}`,
         courseData,
@@ -107,14 +91,10 @@ const EditLesson = () => {
           }
         }
       );
-
-      // Étape 2: Upload du nouveau PDF si présent
+      // 2. Upload new PDF if present
       if (formData.course_pdf) {
-        console.log('📎 Upload du nouveau PDF...');
-        
         const formDataToSend = new FormData();
         formDataToSend.append('file', formData.course_pdf);
-
         await axios.post(
           `${API_URL}/courses/${lessonId}/files`,
           formDataToSend,
@@ -125,76 +105,57 @@ const EditLesson = () => {
             }
           }
         );
-
-        console.log('✅ PDF uploadé');
       }
-
       setSuccess('✅ Cours modifié avec succès!');
-      
-      setTimeout(() => {
-        navigate('/dashboard-teacher');
-      }, 2000);
-
+      setTimeout(() => { navigate('/dashboard-teacher'); }, 2000);
     } catch (error) {
-      console.error('❌ Erreur modification:', error);
-      
       if (error.response) {
         const errorMessage = error.response.data?.error?.message || 'Erreur inconnue';
-        setError(`❌ Erreur ${error.response.status}: ${errorMessage}`);
+        setError(`Erreur ${error.response.status}: ${errorMessage}`);
       } else if (error.request) {
-        setError('❌ Impossible de contacter le serveur Strapi');
+        setError('Impossible de contacter le serveur');
       } else {
-        setError('❌ Erreur: ' + error.message);
+        setError('Erreur: ' + error.message);
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleCancel = () => {
-    navigate('/dashboard-teacher');
-  };
+  const handleCancel = () => { navigate('/dashboard-teacher'); };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-xl">Chargement du cours...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
-        <div className="bg-slate-800 rounded-2xl p-6 mb-8">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 mb-8 shadow">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
               <button
                 onClick={handleCancel}
-                className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg transition-all"
-              >
-                ← Retour
-              </button>
+                className="bg-gray-100 hover:bg-blue-50 hover:text-blue-700 text-gray-700 px-4 py-2 rounded-md border border-gray-200"
+              >← Retour</button>
               <div>
-                <h1 className="text-3xl font-bold text-white">Modifier le Cours</h1>
-                <p className="text-slate-400 mt-2">
-                  Enseignant: {user?.first_name} {user?.last_name}
-                </p>
+                <h1 className="text-2xl font-bold text-gray-900">Modifier le Cours</h1>
+                <p className="text-gray-400 mt-1">Enseignant: {user?.first_name} {user?.last_name}</p>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Formulaire */}
-        <div className="bg-gray-100 rounded-2xl shadow-2xl p-8">
+        {/* Form */}
+        <div className="bg-white border border-gray-100 rounded-2xl shadow p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Titre */}
+            {/* Title */}
             <div>
-              <label className="block text-slate-800 font-semibold mb-3 text-lg">
+              <label className="block text-gray-800 font-semibold mb-2 text-base">
                 Titre du cours *
               </label>
               <input
@@ -202,31 +163,25 @@ const EditLesson = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800"
-                placeholder="Ex: Introduction aux vecteurs"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 required
               />
             </div>
-
             {/* Description */}
             <div>
-              <label className="block text-slate-800 font-semibold mb-3 text-lg">
-                Description
-              </label>
+              <label className="block text-gray-800 font-semibold mb-2">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="4"
-                className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 resize-vertical"
-                placeholder="Décrivez le contenu de ce cours..."
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
             </div>
-
+            {/* Video + order */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* URL Vidéo */}
               <div>
-                <label className="block text-slate-800 font-semibold mb-3">
+                <label className="block text-gray-800 font-semibold mb-2">
                   URL de la vidéo
                 </label>
                 <input
@@ -234,14 +189,12 @@ const EditLesson = () => {
                   name="video_url"
                   value={formData.video_url}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="https://..."
                 />
               </div>
-
-              {/* Ordre */}
               <div>
-                <label className="block text-slate-800 font-semibold mb-3">
+                <label className="block text-gray-800 font-semibold mb-2">
                   Numéro d'ordre
                 </label>
                 <input
@@ -249,34 +202,32 @@ const EditLesson = () => {
                   name="order_no"
                   value={formData.order_no}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="1, 2, 3..."
                   min="1"
                 />
               </div>
             </div>
-
             {/* PDF actuel */}
             {existingPdf && (
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
                 <p className="text-blue-800 font-semibold mb-2">📄 PDF actuel :</p>
                 <a
                   href={`${API_URL.replace('/api', '')}/uploads/courses/${existingPdf.file_name}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-700 underline"
+                  className="text-blue-600 hover:text-blue-800 underline"
                 >
                   {existingPdf.file_name}
                 </a>
               </div>
             )}
-
-            {/* Nouveau fichier PDF */}
+            {/* Nouveau PDF */}
             <div>
-              <label className="block text-slate-800 font-semibold mb-3 text-lg">
+              <label className="block text-gray-800 font-semibold mb-2">
                 {existingPdf ? 'Remplacer le PDF' : 'Ajouter un PDF'}
               </label>
-              <div className="border-2 border-dashed border-slate-400 rounded-xl p-6 text-center transition-all hover:border-blue-500">
+              <div className="border border-dashed border-gray-400 rounded-lg p-4 text-center hover:border-blue-400 transition">
                 <input
                   type="file"
                   accept=".pdf"
@@ -284,27 +235,27 @@ const EditLesson = () => {
                   className="hidden"
                   id="pdf-upload"
                 />
-                <label htmlFor="pdf-upload" className="cursor-pointer">
-                  <div className="text-slate-600 mb-2">
-                    <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p className="text-lg font-medium">
-                      {formData.course_pdf ? formData.course_pdf.name : 'Cliquez pour uploader un nouveau PDF'}
-                    </p>
-                    <p className="text-sm text-slate-500 mt-1">
-                      Formats acceptés: .pdf (Max 10MB)
-                    </p>
+                <label htmlFor="pdf-upload" className="cursor-pointer block text-gray-500 hover:text-blue-600">
+                  <div className="mb-2">
+                    {formData.course_pdf ? (
+                      <span className="font-semibold">{formData.course_pdf.name}</span>
+                    ) : (
+                      <span className="font-semibold">
+                        Cliquez ici pour sélectionner un PDF
+                      </span>
+                    )}
                   </div>
+                  <span className="text-xs text-gray-400">Formats acceptés: .pdf (Max 10MB)</span>
                 </label>
               </div>
               {formData.course_pdf && (
-                <p className="text-green-600 mt-2">✅ Nouveau fichier sélectionné: {formData.course_pdf.name}</p>
+                <p className="text-green-600 mt-2">
+                  ✅ Nouveau fichier sélectionné: {formData.course_pdf.name}
+                </p>
               )}
             </div>
-
             {/* Publication */}
-            <div className="flex items-center space-x-3 p-4 bg-white rounded-xl border-2 border-slate-300">
+            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <input
                 type="checkbox"
                 name="is_published"
@@ -313,37 +264,32 @@ const EditLesson = () => {
                 className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                 id="publish-checkbox"
               />
-              <label htmlFor="publish-checkbox" className="text-slate-800 font-semibold text-lg cursor-pointer">
+              <label htmlFor="publish-checkbox" className="text-gray-800 font-semibold cursor-pointer">
                 Publier ce cours
               </label>
             </div>
-
             {/* Messages */}
             {error && (
-              <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl">
+              <div className="p-4 bg-red-100 border border-red-200 text-red-700 rounded-lg">
                 {error}
               </div>
             )}
-
             {success && (
-              <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-xl">
+              <div className="p-4 bg-green-100 border border-green-200 text-green-700 rounded-lg">
                 {success}
               </div>
             )}
-
             {/* Boutons */}
-            <div className="flex space-x-4 pt-6">
+            <div className="flex gap-4 pt-6">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-4 px-6 rounded-xl transition-all"
-              >
-                Annuler
-              </button>
+                className="flex-1 bg-gray-100 hover:bg-blue-50 hover:text-blue-700 text-gray-700 border border-gray-200 font-medium py-4 px-6 rounded-lg"
+              >Annuler</button>
               <button
                 type="submit"
                 disabled={submitting || !formData.title}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all disabled:opacity-50"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg disabled:opacity-50"
               >
                 {submitting ? (
                   <div className="flex items-center justify-center">

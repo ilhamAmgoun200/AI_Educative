@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getAuthHeaders } from '../utils/auth';
 import { API_URL } from '../config/api';
-import './style/CreateLesson.css';
 
 const CreateLesson = () => {
   const navigate = useNavigate();
@@ -40,9 +39,9 @@ const CreateLesson = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!teacherId) {
-      setError('❌ Erreur: Impossible de récupérer votre identifiant. Veuillez vous reconnecter.');
+      setError('Erreur: Impossible de récupérer votre identifiant. Veuillez vous reconnecter.');
       return;
     }
 
@@ -51,7 +50,7 @@ const CreateLesson = () => {
     setSuccess('');
 
     try {
-      // ÉTAPE 1: Créer le course d'abord SANS le PDF
+      // Création du course d'abord SANS le PDF
       const courseData = {
         title: formData.title,
         description: formData.description,
@@ -59,9 +58,6 @@ const CreateLesson = () => {
         order_no: formData.order_no ? parseInt(formData.order_no) : null,
         is_published: formData.is_published,
       };
-
-      console.log('📤 Étape 1: Création du course:', courseData);
-
       const courseResponse = await axios.post(
         `${API_URL}/courses`,
         courseData,
@@ -72,18 +68,11 @@ const CreateLesson = () => {
           }
         }
       );
-
-      console.log('✅ Course créé:', courseResponse.data);
-      // Flask retourne { message: '...', data: {...} }
       const createdCourseId = courseResponse.data.data?.id || courseResponse.data.id;
-
-      // ÉTAPE 2: Upload du PDF si présent
+      // Upload PDF si présent
       if (formData.course_pdf) {
-        console.log('📎 Étape 2: Upload du PDF...');
-        
         const formDataToSend = new FormData();
         formDataToSend.append('file', formData.course_pdf);
-
         await axios.post(
           `${API_URL}/courses/${createdCourseId}/files`,
           formDataToSend,
@@ -94,45 +83,33 @@ const CreateLesson = () => {
             }
           }
         );
-
-        console.log('✅ PDF uploadé');
       }
-
-    setSuccess('✅ Cours créé avec succès!');
-    
-    setTimeout(() => {
-      navigate('/dashboard-teacher');
-    }, 2000);
-
-  } catch (error) {
-    console.error('❌ Erreur complète:', error);
-    
-    if (error.response) {
-      console.log('📋 Status:', error.response.status);
-      console.log('📋 Data:', error.response.data);
-      
-      const errorMessage = error.response.data?.error || error.response.data?.message || 'Erreur inconnue';
-      setError(`❌ Erreur ${error.response.status}: ${errorMessage}`);
-    } else if (error.request) {
-      setError('❌ Impossible de contacter le serveur Flask. Vérifiez qu\'il est démarré sur http://localhost:5000');
-    } else {
-      setError('❌ Erreur: ' + error.message);
+      setSuccess('Cours créé avec succès!');
+      setTimeout(() => {
+        navigate('/dashboard-teacher');
+      }, 1500);
+    } catch (error) {
+      if (error.response) {
+        const errorMessage = error.response.data?.error || error.response.data?.message || 'Erreur inconnue';
+        setError(`Erreur ${error.response.status}: ${errorMessage}`);
+      } else if (error.request) {
+        setError("Impossible de contacter le serveur.");
+      } else {
+        setError('Erreur: ' + error.message);
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleCancel = () => {
-    navigate('/dashboard-teacher');
   };
+
+  const handleCancel = () => navigate('/dashboard-teacher');
 
   if (!teacherId) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="bg-gray-100 p-8 rounded-2xl text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl text-center border">
           <div className="text-red-500 text-6xl mb-4">❌</div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Erreur d'authentification</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Erreur d'authentification</h2>
           <button
             onClick={() => navigate('/login')}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg"
@@ -145,102 +122,78 @@ const CreateLesson = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-10">
+      <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
-        <div className="bg-slate-800 rounded-2xl p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleCancel}
-                className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg transition-all"
-              >
-                ← Retour
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Créer un Nouveau Cours</h1>
-                <p className="text-slate-400 mt-2">
-                  Enseignant: {user?.first_name} {user?.last_name} | 
-                  ID: {teacherId}
-                </p>
-              </div>
-            </div>
+        <div className="bg-white rounded-xl p-6 mb-8 shadow border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <button
+            onClick={handleCancel}
+            className="bg-gray-100 hover:bg-blue-50 hover:text-blue-700 text-gray-700 px-4 py-2 rounded-lg border border-gray-200 mr-2"
+          >← Retour</button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Créer un Nouveau Cours</h1>
+            <p className="text-gray-400 mt-1 text-sm">
+              Enseignant: {user?.first_name} {user?.last_name} | ID: {teacherId}
+            </p>
           </div>
         </div>
-
         {/* Formulaire */}
-        <div className="bg-gray-100 rounded-2xl shadow-2xl p-8">
+        <div className="bg-white border border-gray-100 rounded-2xl shadow p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Titre */}
             <div>
-              <label className="block text-slate-800 font-semibold mb-3 text-lg">
-                Titre du cours *
-              </label>
+              <label className="block text-gray-800 font-semibold mb-2">Titre du cours *</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 placeholder="Ex: Introduction aux vecteurs"
                 required
               />
             </div>
-
             {/* Description */}
             <div>
-              <label className="block text-slate-800 font-semibold mb-3 text-lg">
-                Description
-              </label>
+              <label className="block text-gray-800 font-semibold mb-2">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="4"
-                className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800 resize-vertical"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 placeholder="Décrivez le contenu de ce cours..."
               />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* URL Vidéo */}
               <div>
-                <label className="block text-slate-800 font-semibold mb-3">
-                  URL de la vidéo
-                </label>
+                <label className="block text-gray-800 font-semibold mb-2">URL de la vidéo</label>
                 <input
                   type="url"
                   name="video_url"
                   value={formData.video_url}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="https://..."
                 />
               </div>
-
-              {/* Ordre */}
               <div>
-                <label className="block text-slate-800 font-semibold mb-3">
-                  Numéro d'ordre
-                </label>
+                <label className="block text-gray-800 font-semibold mb-2">Numéro d'ordre</label>
                 <input
                   type="number"
                   name="order_no"
                   value={formData.order_no}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   placeholder="1, 2, 3..."
                   min="1"
                 />
               </div>
             </div>
-
             {/* Fichier PDF */}
             <div>
-              <label className="block text-slate-800 font-semibold mb-3 text-lg">
-                Fichier PDF du cours
-              </label>
-              <div className="border-2 border-dashed border-slate-400 rounded-xl p-6 text-center transition-all hover:border-blue-500">
+              <label className="block text-gray-800 font-semibold mb-2">Fichier PDF du cours</label>
+              <div className="border border-dashed border-gray-400 rounded-lg p-5 text-center hover:border-blue-400 transition">
                 <input
                   type="file"
                   accept=".pdf"
@@ -248,27 +201,23 @@ const CreateLesson = () => {
                   className="hidden"
                   id="pdf-upload"
                 />
-                <label htmlFor="pdf-upload" className="cursor-pointer">
-                  <div className="text-slate-600 mb-2">
-                    <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p className="text-lg font-medium">
-                      {formData.course_pdf ? formData.course_pdf.name : 'Cliquez pour uploader un PDF'}
-                    </p>
-                    <p className="text-sm text-slate-500 mt-1">
-                      Formats acceptés: .pdf (Max 10MB)
-                    </p>
+                <label htmlFor="pdf-upload" className="cursor-pointer block text-gray-500 hover:text-blue-600">
+                  <div className="mb-2">
+                    {formData.course_pdf ? (
+                      <span className="font-medium">{formData.course_pdf.name}</span>
+                    ) : (
+                      <span className="font-medium">Cliquez ici pour sélectionner un PDF</span>
+                    )}
                   </div>
+                  <span className="text-xs text-gray-400">Formats acceptés: .pdf (Max 10MB)</span>
                 </label>
               </div>
               {formData.course_pdf && (
                 <p className="text-green-600 mt-2">✅ Fichier sélectionné: {formData.course_pdf.name}</p>
               )}
             </div>
-
             {/* Publication */}
-            <div className="flex items-center space-x-3 p-4 bg-white rounded-xl border-2 border-slate-300">
+            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <input
                 type="checkbox"
                 name="is_published"
@@ -277,37 +226,34 @@ const CreateLesson = () => {
                 className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                 id="publish-checkbox"
               />
-              <label htmlFor="publish-checkbox" className="text-slate-800 font-semibold text-lg cursor-pointer">
+              <label htmlFor="publish-checkbox" className="text-gray-800 font-semibold cursor-pointer">
                 Publier immédiatement ce cours
               </label>
             </div>
-
             {/* Messages */}
             {error && (
-              <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl">
+              <div className="p-4 bg-red-100 border border-red-200 text-red-700 rounded-lg">
                 {error}
               </div>
             )}
-
             {success && (
-              <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-xl">
+              <div className="p-4 bg-green-100 border border-green-200 text-green-700 rounded-lg">
                 {success}
               </div>
             )}
-
             {/* Boutons */}
-            <div className="flex space-x-4 pt-6">
+            <div className="flex gap-4 pt-6">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-4 px-6 rounded-xl transition-all"
+                className="flex-1 bg-gray-100 hover:bg-blue-50 hover:text-blue-700 text-gray-700 border border-gray-200 font-medium py-4 px-6 rounded-lg"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 disabled={loading || !formData.title}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all disabled:opacity-50"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg disabled:opacity-50"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -315,7 +261,7 @@ const CreateLesson = () => {
                     Création...
                   </div>
                 ) : (
-                  'Créer le Cours'
+                  'Créer le cours'
                 )}
               </button>
             </div>

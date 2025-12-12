@@ -6,17 +6,14 @@ from datetime import timedelta
 
 class Config:
     """Configuration de base"""
-    # Base de données PostgreSQL
-    DB_HOST = os.environ.get('DB_HOST', '127.0.0.1')
-    DB_PORT = os.environ.get('DB_PORT', '5432')
-    DB_NAME = os.environ.get('DB_NAME', 'aiplatform')
-    DB_USER = os.environ.get('DB_USER', 'postgres')
-    DB_PASSWORD = os.environ.get('DB_PASSWORD', 'root')
-    
-    # Construire l'URI PostgreSQL
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
-    
+
+    # 👉 Connexion directe à ta base Neon PostgreSQL
+    SQLALCHEMY_DATABASE_URI = (
+        "postgresql://neondb_owner:npg_pIUyVdvD7m0A"
+        "@ep-curly-credit-ahekug2m-pooler.c-3.us-east-1.aws.neon.tech"
+        ":5432/neondb?sslmode=require"
+    )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
@@ -35,4 +32,3 @@ class Config:
 
     # CORS
     CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:3001']
-

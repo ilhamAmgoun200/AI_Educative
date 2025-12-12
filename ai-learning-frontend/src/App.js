@@ -14,6 +14,11 @@ import CreateLesson from './pages/CreateLesson';
 import EditLesson from './pages/EditLesson';
 import MyLessons from './pages/MyLessons';
 import LessonDetailsprof from './pages/LessonDetailsprof';
+import ProfilePage from './pages/ProfilePage';
+import AddExercise from './pages/AddExercise';
+import EditExercise from './pages/EditExercise';
+import ViewExercise from './pages/ViewExercise';  
+import FavoritesPage from './pages/FavoritesPage';
 
 
 
@@ -31,6 +36,8 @@ function App() {
             <Route path="/register" element={<RegistrationForm />} />
             <Route path="/loginn" element={<LoginForm />} />
             <Route path="/lesson/:documentId" element={<LessonDetailsprof />} />
+            <Route path="/profile" element={<ProfilePage />} />
+
            
 
 
@@ -43,8 +50,23 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+        <Route 
+  path="/favorites" 
+  element={
+    <ProtectedRoute requiredUserType="student">
+      <FavoritesPage />
+    </ProtectedRoute>
+  } 
+/>
+
         <Route path="/edit-lesson/:lessonId" element={<EditLesson />} />
         <Route path="/my-lessons" element={<MyLessons />} />
+        <Route path="/add-exercise/:lessonId" element={<AddExercise />} />
+        <Route path="/edit-exercise/:exerciseId" element={<EditExercise />} />
+        <Route path="/view-exercise/:exerciseId" element={<ViewExercise />} />
+        
+
 
 
         <Route 

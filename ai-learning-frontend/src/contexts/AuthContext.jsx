@@ -115,10 +115,20 @@ export const AuthProvider = ({ children }) => {
     return !!getToken() && !!user;
   };
 
+  const updateUser = (updatedUserData) => {
+  setUser(prevUser => {
+   const newUser = { ...prevUser, ...updatedUserData };
+   // Mettre à jour le localStorage
+   localStorage.setItem('user', JSON.stringify(newUser));
+   return newUser;
+   });
+  };
+
   const value = {
     user,
     teacherId,
     loading,
+    updateUser,
     login,
     logout,
     getToken,

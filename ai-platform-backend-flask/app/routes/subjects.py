@@ -70,8 +70,8 @@ def delete_subject(subject_id):
     """Supprimer un subject (admin seulement)"""
     # TODO: Ajouter vérification admin
     subject = Subject.query.get_or_404(subject_id)
+
     db.session.delete(subject)
     db.session.commit()
 
     return jsonify({'message': 'Subject supprimé avec succès'}), 204
-

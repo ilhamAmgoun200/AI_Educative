@@ -11,32 +11,30 @@ teachers_bp = Blueprint('teachers', __name__)
 
 @teachers_bp.route('', methods=['POST'])
 def create_teacher():
-    """Créer un nouveau teacher (inscription)"""
     data = request.get_json()
-    
-    # Validation des champs requis
+
     required_fields = ['first_name', 'last_name', 'email', 'password', 'cin']
     for field in required_fields:
         if not data.get(field):
             return jsonify({'error': f'Le champ {field} est requis'}), 400
-    
-    # Vérifier si l'email existe déjà
+
     if Teacher.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Cet email est déjà utilisé'}), 400
-    
-    # Vérifier si le CIN existe déjà
+
     if data.get('cin') and Teacher.query.filter_by(cin=data['cin']).first():
         return jsonify({'error': 'Ce CIN est déjà utilisé'}), 400
-    
-    # Gérer le subject (peut être un ID ou un nom)
+
+    # ✅ NOUVELLE VERSION : subject_id envoyé directement par le frontend
     subject_id = data.get('subject_id')
-    if not subject_id and data.get('subject'):
-        # Si on reçoit le nom de la matière, chercher l'ID
-        subject = Subject.query.filter_by(subject_name=data['subject']).first()
-        if subject:
-            subject_id = subject.id
-    
-    # Créer le teacher
+
+    # Vérification si le subject_id existe vraiment
+    if subject_id:
+        subject = Subject.query.get(subject_id)
+        if not subject:
+            return jsonify({'error': 'Subject introuvable'}), 400
+    else:
+        subject_id = None
+
     teacher = Teacher(
         first_name=data['first_name'],
         last_name=data['last_name'],
@@ -48,38 +46,37 @@ def create_teacher():
         experience_years=data.get('experience_years', 0),
         is_active=True
     )
-    
+
     teacher.set_password(data['password'])
-    
+
     db.session.add(teacher)
     db.session.commit()
-    
+
     return jsonify({
         'message': 'Teacher créé avec succès',
         'data': teacher.to_dict()
     }), 201
 
+
 @teachers_bp.route('', methods=['GET'])
 @jwt_required(optional=True)
 def get_teachers():
-    """Récupérer tous les teachers"""
+    """Récupérer tous les teachers avec leur matière"""
     teachers = Teacher.query.filter_by(is_active=True).all()
-    return jsonify({
-        'data': [teacher.to_dict() for teacher in teachers]
-    }), 200
-
-@teachers_bp.route('/<int:teacher_id>', methods=['GET'])
-@jwt_required(optional=True)
-def get_teacher(teacher_id):
-    """Récupérer un teacher par ID"""
-    teacher = Teacher.query.get_or_404(teacher_id)
-    return jsonify({
-        'data': teacher.to_dict()
-    }), 200
+    result = []
+    for teacher in teachers:
+        t = teacher.to_dict()
+        # Ajouter la matière
+        if teacher.subject:
+            t['subject'] = teacher.subject.to_dict()
+        else:
+            t['subject'] = None
+        result.append(t)
+    return jsonify({'data': result}), 200
 
 @teachers_bp.route('/me', methods=['GET'])
 @jwt_required()
-def get_current_teacher():
+def get_current_teacher_profile():  
     """Récupérer le teacher actuel"""
     claims = get_jwt()
     if claims.get('user_type') != 'teacher':
@@ -87,13 +84,23 @@ def get_current_teacher():
 
     teacher_id = get_jwt_identity()
     teacher = Teacher.query.get_or_404(teacher_id)
+    
+    # Récupérer les données de base
+    teacher_data = teacher.to_dict()
+    
+    # Ajouter le nom de la matière
+    if teacher.subject:
+        teacher_data['subject_name'] = teacher.subject.subject_name
+    else:
+        teacher_data['subject_name'] = None
+        
     return jsonify({
-        'data': teacher.to_dict()
+        'data': teacher_data
     }), 200
 
 @teachers_bp.route('/me', methods=['PUT'])
 @jwt_required()
-def update_current_teacher():
+def update_current_teacher_profile():  
     """Modifier le teacher actuel"""
     claims = get_jwt()
     if claims.get('user_type') != 'teacher':
@@ -103,19 +110,28 @@ def update_current_teacher():
     teacher = Teacher.query.get_or_404(teacher_id)
     data = request.get_json()
 
+    # Mettre à jour tous les champs
     teacher.first_name = data.get('first_name', teacher.first_name)
     teacher.last_name = data.get('last_name', teacher.last_name)
+    teacher.email = data.get('email', teacher.email)
     teacher.phone = data.get('phone', teacher.phone)
-    teacher.subject_id = data.get('subject_id', teacher.subject_id)
+    teacher.cin = data.get('cin', teacher.cin)
     teacher.establishment = data.get('establishment', teacher.establishment)
     teacher.experience_years = data.get('experience_years', teacher.experience_years)
 
-    if 'password' in data:
-        teacher.set_password(data['password'])
+    # ⚠️ CORRECTION SIMPLE : Accepter subject_id directement
+    if 'subject_id' in data:
+        teacher.subject_id = data['subject_id']
 
     db.session.commit()
 
-    return jsonify({
-        'data': teacher.to_dict()
-    }), 200
+    # Préparer la réponse avec le nom de la matière
+    teacher_data = teacher.to_dict()
+    if teacher.subject:
+        teacher_data['subject_name'] = teacher.subject.subject_name
+    else:
+        teacher_data['subject_name'] = None
 
+    return jsonify({
+        'data': teacher_data
+    }), 200
