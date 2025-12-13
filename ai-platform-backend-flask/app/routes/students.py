@@ -5,6 +5,8 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app import db
 from app.models.student import Student
+from datetime import datetime
+
 
 students_bp = Blueprint('students', __name__)
 
@@ -31,18 +33,22 @@ def create_student():
     if data.get('cne') and Student.query.filter_by(cne=data['cne']).first():
         return jsonify({'error': 'Ce CNE est déjà utilisé'}), 400
     
+    birth_date = None
+    if data.get('birth_date'):
+      birth_date = datetime.strptime(data['birth_date'], '%Y-%m-%d').date()
+
     # Créer le student
     student = Student(
-        first_name=data['first_name'],
-        last_name=data['last_name'],
-        email=data['email'],
-        phone=data.get('phone'),
-        cin=data['cin'],
-        cne=data.get('cne'),
-        birth_date=data.get('birth_date'),
-        branch=data.get('branch'),
-        establishment=data.get('establishment'),
-        is_active=True
+      first_name=data['first_name'],
+      last_name=data['last_name'],
+      email=data['email'],
+      phone=data.get('phone'),
+      cin=data['cin'],
+      cne=data.get('cne'),
+      birth_date=birth_date,
+      branch=data.get('branch'),
+      establishment=data.get('establishment'),
+      is_active=True
     )
     
     student.set_password(data['password'])

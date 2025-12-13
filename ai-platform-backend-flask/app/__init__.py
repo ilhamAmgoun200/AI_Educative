@@ -30,7 +30,8 @@ def create_app(config_class=Config):
     # Configuration CORS plus permissive
     cors.init_app(app, 
         resources={r"/*": {  # Permet TOUS les endpoints
-            "origins": ["http://localhost:3000"],
+            "origins": ["http://localhost:3000",
+                        "http://localhost:3001"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "expose_headers": ["Content-Type", "Authorization"],

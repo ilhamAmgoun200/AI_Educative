@@ -17,7 +17,7 @@ class Student(db.Model):
     cin = db.Column(db.String(20), unique=True)
     cne = db.Column(db.String(20), unique=True)
     birth_date = db.Column(db.Date)
-    branch = db.Column(db.String(10))  # SVT, PC, SMA, SMB
+    branch = db.Column(db.String(50))  # SVT, PC, SMA, SMB
     establishment = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
