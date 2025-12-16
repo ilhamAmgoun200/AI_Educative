@@ -7,6 +7,8 @@ import { API_URL } from '../config/api';
 import UserMenu from '../components/UserMenu';
 import LikeButton from '../components/LikeButton';
 
+import RecommendationsCard from '../components/RecommendationCard';
+
 // 👉 IMPORT DU COMPOSANT PROGRESSCARD
 import ProgressCard from './ProgressCard';
 
@@ -98,6 +100,9 @@ const DashboardStudent = () => {
 
         {/* 🎯 PROGRESS CARD — AJOUTÉ ICI */}
         <ProgressCard />
+
+        {/* 🤖 AI RECOMMENDATIONS — NEW SECTION */}
+        <RecommendationsCard />
 
         {/* 📚 SECTION MATIÈRES */}
         <div className="bg-gray-100 rounded-2xl shadow-lg p-6 mb-8">
