@@ -36,16 +36,72 @@ const RegistrationForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage('');
-
-    setTimeout(() => {
-      setMessage(`✅ ${userType === 'student' ? 'Étudiant' : 'Enseignant'} créé avec succès !`);
-      setLoading(false);
-      resetForm();
-    }, 1500);
+  const handleSubmit = async (e) => {
+     e.preventDefault();
+     setLoading(true);
+     setMessage('');
+   
+     try {
+       // Préparer les données selon le type d'utilisateur
+       const endpoint = userType === 'student' 
+         ? 'http://localhost:5000/api/students'  // Remplacez par votre URL
+         : 'http://localhost:5000/api/teachers'; // Remplacez par votre URL
+   
+       const dataToSend = userType === 'student' 
+         ? {
+             first_name: formData.first_name,
+             last_name: formData.last_name,
+             email: formData.email,
+             phone: formData.phone,
+             password: formData.password,
+             cin: formData.cin,
+             establishment: formData.establishment,
+             birth_date: formData.birth_date,
+             branch: formData.branch,
+             cne: formData.cne
+           }
+         : {
+             first_name: formData.first_name,
+             last_name: formData.last_name,
+             email: formData.email,
+             phone: formData.phone,
+             password: formData.password,
+             cin: formData.cin,
+             establishment: formData.establishment,
+             subject_id: parseInt(formData.subject_id),
+             experience_years: parseInt(formData.experience_years)
+           };
+   
+       // Envoyer les données à l'API
+       const response = await fetch(endpoint, {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify(dataToSend)
+       });
+   
+       const result = await response.json();
+   
+       if (response.ok) {
+         // Succès
+         setMessage(`✅ ${userType === 'student' ? 'Étudiant' : 'Enseignant'} créé avec succès !`);
+         resetForm();
+         
+         // Optionnel : rediriger après 2 secondes
+         setTimeout(() => {
+           window.location.href = '/loginn';
+         }, 2000);
+       } else {
+         setMessage(`❌ ${result.error || result.message || 'Une erreur est survenue'}`);
+       }
+     } catch (error) {
+       // Erreur réseau ou autre
+       console.error('Erreur:', error);
+       setMessage('❌ Erreur de connexion. Vérifiez votre serveur backend.');
+     } finally {
+       setLoading(false);
+     }
   };
 
   const resetForm = () => {
@@ -150,15 +206,16 @@ const RegistrationForm = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    CIN
-                  </label>
+                  CIN <span className="text-red-500">*</span>  {/* ← AJOUTER CETTE PARTIE */}
+                </label>
                   <input
-                    type="text"
-                    name="cin"
-                    value={formData.cin}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                    placeholder="AB123456"
+                     type="text"
+                     name="cin"
+                     value={formData.cin}
+                     onChange={handleInputChange}
+                     required 
+                     className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                     placeholder="AB123456"
                   />
                 </div>
               </div>
