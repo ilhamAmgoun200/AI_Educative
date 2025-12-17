@@ -3,16 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import LikeButton from '../components/LikeButton';
 
-// Simuler les imports (à adapter selon votre projet)
+// Config API
 const API_URL = 'http://localhost:5000/api';
 const getAuthHeaders = () => ({
   'Authorization': `Bearer ${localStorage.getItem('token')}`
 });
 
-const LessonDetails = () => {
+const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [lesson, setLesson] = useState(null);
+  const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -29,7 +30,7 @@ const LessonDetails = () => {
   const [selectedPdf, setSelectedPdf] = useState(null);
   const [deletingExplanationId, setDeletingExplanationId] = useState(null);
 
-  // 🆕 NOUVEAUX ÉTATS POUR LE CHAT
+  // État pour le chat
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -38,32 +39,20 @@ const LessonDetails = () => {
 
   useEffect(() => {
     fetchLesson();
+    fetchExercises();
     fetchCurrentExplanation();
     fetchExplanationsHistory();
-    fetchChatHistory(); // 🆕 Charger l'historique du chat
+    fetchChatHistory();
   }, [id]);
 
-  // 🆕 Auto-scroll vers le bas du chat
+  // Auto-scroll vers le bas du chat
   useEffect(() => {
     if (showChat && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages, showChat]);
-   //ajoute
-  const handleMarkCompleted = async () => {
-  try {
-    await axios.post(
-      `${API_URL}/progress/mark-completed/${id}`,
-      {},
-      { headers: getAuthHeaders() }
-    );
-    alert('Cours marqué comme terminé !');
-  } catch (error) {
-    console.error('Erreur:', error);
-    alert('Erreur lors du marquage');
-  }
-  };
-    // Marquer le cours comme vu automatiquement
+
+  // Marquer le cours comme vu automatiquement
   useEffect(() => {
     if (lesson) {
       markCourseAsViewed();
@@ -81,7 +70,19 @@ const LessonDetails = () => {
       console.log('Erreur marquage progression:', error);
     }
   };
-  
+
+  // 🆕 FONCTION POUR CHARGER LES EXERCICES
+  const fetchExercises = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/exercises/course/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      setExercises(response.data.data || []);
+    } catch (error) {
+      console.error("Erreur récupération exercices", error);
+    }
+  };
+
   const fetchLesson = async () => {
     try {
       setLoading(true);
@@ -120,7 +121,6 @@ const LessonDetails = () => {
     }
   };
 
-  // 🆕 FONCTION POUR CHARGER L'HISTORIQUE DU CHAT
   const fetchChatHistory = async () => {
     try {
       const response = await axios.get(
@@ -133,7 +133,20 @@ const LessonDetails = () => {
     }
   };
 
-  // 🆕 FONCTION POUR ENVOYER UN MESSAGE
+  const handleMarkCompleted = async () => {
+    try {
+      await axios.post(
+        `${API_URL}/progress/mark-completed/${id}`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+      alert('Cours marqué comme terminé !');
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors du marquage');
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -149,7 +162,6 @@ const LessonDetails = () => {
         { headers: getAuthHeaders() }
       );
       
-      // Ajouter les deux messages (utilisateur + IA) à l'état
       setChatMessages(prev => [
         ...prev,
         response.data.data.user_message,
@@ -166,7 +178,6 @@ const LessonDetails = () => {
     }
   };
 
-  // 🆕 FONCTION POUR EFFACER L'HISTORIQUE DU CHAT
   const handleClearChat = async () => {
     if (!window.confirm('Êtes-vous sûr de vouloir effacer tout l\'historique du chat ?')) {
       return;
@@ -302,6 +313,12 @@ const LessonDetails = () => {
     setSelectedPdf(null);
   };
 
+  // 🆕 FONCTION POUR OBTENIR L'URL DES EXERCICES PDF
+  const getExercisePdfUrl = (fileName) => {
+    const baseUrl = API_URL.replace('/api', '');
+    return `${baseUrl}/uploads/exercises/${fileName}`;
+  };
+
   const getPdfUrl = (fileName) => {
     const baseUrl = API_URL.replace('/api', '');
     return `${baseUrl}/uploads/courses/${fileName}`;
@@ -325,16 +342,15 @@ const LessonDetails = () => {
         >
           Retour à l'accueil
         </button>
-        
       </div>
-      
     );
   }
-  return (
+
+return (
   <div className="min-h-screen bg-gray-50 py-8">
     <div className="max-w-7xl mx-auto px-4">
       {/* Bouton Retour */}
-      <div className="mb-6">
+      <div className="mb-6 flex gap-4">
         <button
           onClick={() => navigate(-1)}
           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-all"
@@ -342,11 +358,11 @@ const LessonDetails = () => {
           ← Retour
         </button>
         <button
-    onClick={() => navigate('/favorites')} // Créeras cette page plus tard
-    className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
-  >
-    ❤️ Mes Favoris
-  </button>
+          onClick={() => navigate('/favorites')}
+          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+        >
+          ❤️ Mes Favoris
+        </button>
       </div>
 
       {/* Header avec dégradé coloré */}
@@ -355,7 +371,7 @@ const LessonDetails = () => {
         <p className="text-lg text-purple-100 mb-4">{lesson.description}</p>
         
         {/* Informations du cours - Horizontal */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6 bg-white/10 backdrop-blur-sm rounded-lg p-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mt-6 bg-white/10 backdrop-blur-sm rounded-lg p-4">
           <div className="text-center">
             <p className="text-sm text-purple-200">📅 Création</p>
             <p className="font-semibold text-white mt-1">
@@ -373,23 +389,23 @@ const LessonDetails = () => {
             <p className="font-semibold text-white mt-1">{lesson.files?.length || 0}</p>
           </div>
           <div className="text-center">
+            <p className="text-sm text-purple-200">📚 Exercices</p>
+            <p className="font-semibold text-white mt-1">{exercises.length}</p>
+          </div>
+          <div className="text-center">
             <p className="text-sm text-purple-200">🤖 Explications</p>
             <p className="font-semibold text-white mt-1">{explanationsHistory.length}</p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-purple-200">💬 Messages</p>
-            <p className="font-semibold text-white mt-1">{chatMessages.length}</p>
+            <p className="text-sm text-purple-200">❤️ Favoris</p>
+            <div className="flex items-center justify-center mt-1">
+              <LikeButton 
+                courseId={id} 
+                showCount={true} 
+                size="medium" 
+              />
+            </div>
           </div>
-          <div className="text-center">
-             <p className="text-sm text-purple-200">❤️ Favoris</p>
-  <div className="flex items-center justify-center mt-1">
-    <LikeButton 
-      courseId={id} 
-      showCount={true} 
-      size="medium" 
-    />
-  </div>
-  </div>
         </div>
       </div>
 
@@ -398,6 +414,71 @@ const LessonDetails = () => {
         {/* Colonne principale - Gauche (2/3) */}
         <div className="lg:col-span-2 space-y-6">
           
+          {/* 🆕 SECTION EXERCICES DU COURS */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg shadow-lg p-6 border border-green-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <span className="text-3xl mr-3">📚</span>
+                <h2 className="text-2xl font-bold text-gray-800">Exercices du cours</h2>
+              </div>
+              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-semibold">
+                {exercises.length} exercice{exercises.length > 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {exercises.length === 0 ? (
+              <div className="text-center py-8">
+                <span className="text-5xl mb-4 block">📝</span>
+                <p className="text-gray-500 mb-4">Aucun exercice n'a été ajouté à ce cours pour le moment.</p>
+                <p className="text-gray-400 text-sm">Les exercices apparaîtront ici quand le professeur en aura créé.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {exercises.map((exercise) => (
+                  <div key={exercise.id} className="bg-white rounded-lg p-4 border border-gray-200 hover:border-green-300 transition-all shadow-sm">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-bold text-gray-800 text-lg">{exercise.title}</h3>
+                        {exercise.description && (
+                          <p className="text-gray-600 text-sm mt-1">{exercise.description}</p>
+                        )}
+                      </div>
+                      {exercise.pdf_file && (
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                          📄 PDF disponible
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <div className="flex gap-3">
+                        {exercise.pdf_file && (
+                          <a
+                            href={getExercisePdfUrl(exercise.pdf_file)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all text-sm flex items-center gap-2"
+                          >
+                            📄 Voir l'exercice
+                          </a>
+                        )}
+                        <button
+                          onClick={() => window.open(getExercisePdfUrl(exercise.pdf_file), '_blank')}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all text-sm flex items-center gap-2"
+                        >
+                          📥 Télécharger
+                        </button>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        Ajouté le {new Date(exercise.created_at).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Section Assistant IA */}
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
@@ -528,15 +609,17 @@ const LessonDetails = () => {
               </a>
             </div>
           )}
+
           {/* Bouton pour marquer comme terminé */}
-             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-               <button
-                 onClick={handleMarkCompleted}
-                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all w-full"
-               >
-                 ✓ Marquer ce cours comme terminé
-               </button>
-             </div>
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <button
+              onClick={handleMarkCompleted}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all w-full"
+            >
+              ✓ Marquer ce cours comme terminé
+            </button>
+          </div>
+
           {/* PDF */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">📄 Supports de cours</h2>
@@ -729,4 +812,4 @@ const LessonDetails = () => {
 );
 };
 
-export default LessonDetails;
+export default CourseDetail;
