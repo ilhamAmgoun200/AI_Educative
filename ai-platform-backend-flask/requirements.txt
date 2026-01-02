@@ -11,3 +11,4 @@ gunicorn==21.2.0
 PyPDF2==3.0.1
 fpdf==1.7.2
 groq==0.36.0
+tensorflow==2.20.0
