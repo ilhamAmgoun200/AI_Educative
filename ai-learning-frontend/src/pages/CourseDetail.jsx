@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import LikeButton from '../components/LikeButton';
+import { API_URL } from '../config/api';
 
 // Config API
-const API_URL = 'http://localhost:5000/api';
+
 const getAuthHeaders = () => ({
   'Authorization': `Bearer ${localStorage.getItem('token')}`
 });

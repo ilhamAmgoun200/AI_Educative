@@ -44,8 +44,8 @@ const RegistrationForm = () => {
      try {
        // Préparer les données selon le type d'utilisateur
        const endpoint = userType === 'student' 
-         ? 'http://localhost:5000/api/students'  // Remplacez par votre URL
-         : 'http://localhost:5000/api/teachers'; // Remplacez par votre URL
+         ? 'https://ai-educative-12.onrender.com/api/students'  // Remplacez par votre URL
+         : 'https://ai-educative-12.onrender.com/api/teachers'; // Remplacez par votre URL
    
        const dataToSend = userType === 'student' 
          ? {
