@@ -9,3 +9,4 @@ psycopg2-binary==2.9.9
 google-genai==1.52.0
 gunicorn==21.2.0
 PyPDF2==3.0.1
+fpdf==1.7.2
