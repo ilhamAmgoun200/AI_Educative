@@ -6,6 +6,7 @@ from app import db
 from app.models.course import Course
 from app.models.exercise import Exercise
 from app.services import generate_ai_exercise_pdf_for_course
+from app.models.notification import Notification
 
 
 exercises_bp = Blueprint('exercises', __name__)
@@ -23,7 +24,7 @@ def create_exercise():
         print(f"Form data: {dict(request.form)}")
         print(f"Files: {dict(request.files)}")
         print("=" * 50)
-        
+
         title = request.form.get('title')
         description = request.form.get('description')
         course_id_str = request.form.get('course_id')
@@ -34,6 +35,7 @@ def create_exercise():
         print(f"course_id_str: {course_id_str}")
         print(f"file: {file}")
 
+        # ✅ Validation des champs requis
         if not title or not course_id_str:
             print(f"ERREUR: Champs manquants - title={title}, course_id={course_id_str}")
             return jsonify({"error": "title et course_id requis"}), 400
@@ -50,6 +52,7 @@ def create_exercise():
             print(f"ERREUR: Cours introuvable - ID: {course_id}")
             return jsonify({"error": f"Cours introuvable (ID: {course_id})"}), 404
 
+        # ✅ Gestion du fichier PDF
         filename = None
         if file:
             filename = secure_filename(file.filename)
@@ -57,6 +60,7 @@ def create_exercise():
             file.save(upload_path)
             print(f"Fichier sauvegardé: {upload_path}")
 
+        # ✅ Création de l'exercice
         exercise = Exercise(
             title=title,
             description=description,
@@ -65,10 +69,25 @@ def create_exercise():
         )
 
         db.session.add(exercise)
+
+        # 🔔 Création de la notification
+        notif = Notification(
+            title="📝 Nouvel exercice",
+            message=f"Un nouvel exercice a été ajouté : {title}",
+            user_type="student"
+        )
+
+        db.session.add(notif)
+
+        # ✅ Un seul commit (propre et atomique)
         db.session.commit()
-        
-        print("Exercise créé avec succès!")
-        return jsonify({"message": "Exercise ajouté", "data": exercise.to_dict()}), 201
+
+        print("Exercise et notification créés avec succès!")
+
+        return jsonify({
+            "message": "Exercise ajouté",
+            "data": exercise.to_dict()
+        }), 201
 
     except Exception as e:
         db.session.rollback()
@@ -76,6 +95,14 @@ def create_exercise():
         print("ERREUR EXCEPTION:")
         traceback.print_exc()
         return jsonify({"error": f"Erreur serveur: {str(e)}"}), 500
+
+
+
+
+
+
+
+
 
 
 # ✅ ROUTE MANQUANTE - Récupérer un exercice par ID

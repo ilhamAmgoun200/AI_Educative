@@ -8,6 +8,8 @@ import os
 from app import db
 from app.models.course import Course, CourseFile
 from app.models.teacher import Teacher
+from app.models.notification import Notification  # ✅ ICI
+
 
 courses_bp = Blueprint('courses', __name__)
 
@@ -103,8 +105,18 @@ def create_course():
 
         db.session.add(course)
         db.session.commit()
+
         
         print(f"[DEBUG] Course créé avec succès: ID={course.id}")
+        # 🔔 AJOUT DE LA NOTIFICATION ICI
+        notif = Notification(
+            title="📚 Nouveau cours ajouté",
+            message=f"Le cours « {course.title} » est maintenant disponible",
+            user_type="student"
+        )
+        db.session.add(notif)
+        db.session.commit()
+
 
         return jsonify({
             'message': 'Course créé avec succès',

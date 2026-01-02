@@ -73,6 +73,8 @@ def create_app(config_class=Config):
     from app.routes.chat_routes import chat_bp
     from app.routes.likes import likes_bp
     from app.routes.recommandation import recommend_bp
+    from app.routes.notifications import notifications_bp
+
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(teachers_bp, url_prefix='/api/teachers')
@@ -85,7 +87,8 @@ def create_app(config_class=Config):
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
     app.register_blueprint(likes_bp, url_prefix='/api/likes')
     app.register_blueprint(recommend_bp, url_prefix='/api/recommandation')
-    
+    app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
+
     # Route pour servir les fichiers uploadés
     @app.route('/uploads/courses/<filename>')
     def uploaded_courses_file(filename):

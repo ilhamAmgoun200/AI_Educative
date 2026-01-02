@@ -9,5 +9,6 @@ from app.models.exercise import Exercise
 from app.models.course_explanation import CourseExplanation
 from app.models.student_progress import StudentProgress
 from app.models.chat_message import ChatMessage
+from app.models.notification import Notification
 
-__all__ = ['Teacher', 'Student', 'Subject', 'Course', 'CourseFile', 'Exercise', 'CourseExplanation', 'StudentProgress','ChatMessage']
+__all__ = ['Teacher', 'Student', 'Subject', 'Course', 'CourseFile', 'Exercise', 'CourseExplanation', 'StudentProgress','ChatMessage', 'Notification']
