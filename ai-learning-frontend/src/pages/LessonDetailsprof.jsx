@@ -16,7 +16,7 @@ const LessonDetailsprof = () => {
   const fetchLesson = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`https://ai-educative-12.onrender.com/api/lessons/${documentId}`);
+      const response = await axios.get(`https://ai-educative-13444.onrender.com/api/lessons/${documentId}`);
       setLesson(response.data.data);
     } catch (err) {
       console.error(err);
@@ -30,7 +30,7 @@ const LessonDetailsprof = () => {
     if (!window.confirm(`Voulez-vous vraiment supprimer "${lesson.title}" ?`)) return;
     try {
       const token = localStorage.getItem('authToken');
-      await axios.delete(`https://ai-educative-12.onrender.com/api/lessons/${documentId}`, {
+      await axios.delete(`https://ai-educative-13444.onrender.com/api/lessons/${documentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert('Cours supprimé');
