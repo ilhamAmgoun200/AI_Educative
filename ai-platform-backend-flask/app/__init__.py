@@ -27,7 +27,7 @@ def create_app(config_class=Config):
         "origins": [
             "http://localhost:3000",
             "http://localhost:3001",
-            "https://ai-educative-1344-5g6z.onrender.com"
+            "https://ai-educative-1344.onrender.com"
         ]
     }}
 )
