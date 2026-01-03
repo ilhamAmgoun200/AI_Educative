@@ -15,31 +15,28 @@ import os
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
-cors = CORS()
+
 
 def create_app(config_class=Config):
     """Factory function pour créer l'application Flask"""
     app = Flask(__name__)
     app.config.from_object(config_class)
+    CORS(
+    app,
+    resources={r"/api/*": {
+        "origins": [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "https://ai-educative-1344-5g6z.onrender.com"
+        ]
+    }}
+)
 
     # Initialiser les extensions
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
     
-    # Configuration CORS plus permissive
-    cors.init_app(app, 
-        resources={r"/*": {  # Permet TOUS les endpoints
-            "origins": ["http://localhost:3000",
-                        "http://localhost:3001",
-                        "https://ai-educative-1344-5g6z.onrender.com"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "expose_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True,
-            "max_age": 3600
-        }}
-    )
 
     
     # === 📌 ICI : ROUTE POUR SERVIR PDF IA ===
