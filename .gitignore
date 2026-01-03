@@ -7,3 +7,8 @@ node_modules/
 .cache/
 **/.cache/
 *.pack
+# Frontend
+ai-learning-frontend/node_modules/
+ai-learning-frontend/.cache/
+ai-learning-frontend/build/
+ai-learning-frontend/dist/
