@@ -31,7 +31,8 @@ def create_app(config_class=Config):
     cors.init_app(app, 
         resources={r"/*": {  # Permet TOUS les endpoints
             "origins": ["http://localhost:3000",
-                        "http://localhost:3001"],
+                        "http://localhost:3001",
+                        "https://ai-educative-1344.onrender.com"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "expose_headers": ["Content-Type", "Authorization"],
