@@ -31,4 +31,4 @@ class Config:
     ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'mp4', 'mp3'}
 
     # CORS
-    CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:3001', 'https://ai-educative-1344.onrender.com']
+    CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:3001', 'https://ai-educative-1344-5g6z.onrender.com']
