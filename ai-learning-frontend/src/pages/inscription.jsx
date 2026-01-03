@@ -44,8 +44,8 @@ const RegistrationForm = () => {
      try {
        // Préparer les données selon le type d'utilisateur
        const endpoint = userType === 'student' 
-         ? 'https://ai-educative-12.onrender.com/api/students'  // Remplacez par votre URL
-         : 'https://ai-educative-12.onrender.com/api/teachers'; // Remplacez par votre URL
+         ? 'https://ai-educative-13444.onrender.com/api/students'  // Remplacez par votre URL
+         : 'https://ai-educative-13444.onrender.com/api/teachers'; // Remplacez par votre URL
    
        const dataToSend = userType === 'student' 
          ? {
@@ -434,5 +434,6 @@ const RegistrationForm = () => {
     </div>
   );
 };
+
 
 export default RegistrationForm;
